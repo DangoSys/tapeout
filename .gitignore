@@ -1,0 +1,11 @@
+*.vcd
+*.log
+*.svf
+.*
+!.gitignore
+dc_outputs/
+dc_reports/
+dc_work/
+ptpx_reports/
+db/
+alib-52/
