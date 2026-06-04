@@ -1,0 +1,11 @@
+#!/bin/sh
+set -eu
+
+RUN_TAG="${RUN_TAG:-$(date +%m%d_%H%M)}"
+SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+. "$SCRIPT_DIR/../config/env.sh"
+
+mkdir -p logs outputs rpt
+mkdir -p "outputs/$RUN_TAG" "rpt/$RUN_TAG"
+
+pt_shell -f ./scripts/ptpx.tcl -x "set RUN_TAG $RUN_TAG" | tee "logs/ptpx_${RUN_TAG}.log"
