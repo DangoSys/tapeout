@@ -1,6 +1,48 @@
 set STAGE_DIR [file normalize [file join [pwd]]]
 source -e -v ../config/project.tcl
 
+proc run_or_die {command description} {
+  if {[catch {uplevel 1 $command} result options]} {
+    puts stderr "FATAL: $description failed: $result"
+    if {[dict exists $options -errorinfo]} {
+      puts stderr [dict get $options -errorinfo]
+    }
+    exit 1
+  }
+  return $result
+}
+
+proc fail_if_report_matches {path patterns description} {
+  if {![file exists $path]} {
+    error "$description report does not exist: $path"
+  }
+  set fh [open $path r]
+  set text [read $fh]
+  close $fh
+  foreach pattern $patterns {
+    if {[regexp $pattern $text]} {
+      error "$description found pattern '$pattern' in $path"
+    }
+  }
+}
+
+proc copy_generated_netlist_outputs {src_dir dst_dir} {
+  if {![file isdirectory $src_dir]} {
+    error "DC output directory does not exist: $src_dir"
+  }
+  file mkdir $dst_dir
+  set copied_files [list]
+  foreach src [glob -nocomplain -types f [file join $src_dir *]] {
+    set dst [file join $dst_dir [file tail $src]]
+    file copy -force $src $dst
+    lappend copied_files $dst
+  }
+  if {[llength $copied_files] == 0} {
+    error "No generated netlist output files found under $src_dir"
+  }
+  return $copied_files
+}
+
 if {![info exists RUN_TAG]} {
   set RUN_TAG [clock format [clock seconds] -format "%m%d_%H%M"]
 }
@@ -19,44 +61,49 @@ set verilogout_equation false
 set change_names_dont_change_bus_members true
 set compile_disable_hierarchical_inverter_opt true
 
-setup_common_libraries
+run_or_die {setup_common_libraries} "library setup"
 
 set hdlin_verilog_defines $RTL_DEFINES
 set hdlin_auto_save_templates true
 set_app_var alib_library_analysis_path ./alib-52
 
-set rtl_files [concat [read_filelist $RTL_FILELIST] [existing_files $EXTRA_RTL_FILES "Extra RTL file"]]
+run_or_die {
+  set rtl_files [concat [read_filelist $RTL_FILELIST] [existing_files $EXTRA_RTL_FILES "Extra RTL file"]]
+} "RTL file collection"
 puts "Analyzing [llength $rtl_files] RTL files"
-analyze -format sverilog $rtl_files
+run_or_die {analyze -format sverilog $rtl_files} "RTL analyze"
 
-elaborate $TOP_MODULE
-current_design $TOP_MODULE
-link
+run_or_die {elaborate $TOP_MODULE} "elaborate $TOP_MODULE"
+run_or_die {current_design $TOP_MODULE} "select current design $TOP_MODULE"
+run_or_die {link} "link current design"
 
-source -e -v ./scripts/constraints.tcl
-source -e -v ./scripts/set_dont_touch.tcl
-source -e -v ./scripts/set_false_path.tcl
-source -e -v ./scripts/set_dont_use.tcl
-source -e -v ./scripts/operation_conditions.tcl
+run_or_die {source -e -v ./scripts/constraints.tcl} "source constraints.tcl"
+run_or_die {source -e -v ./scripts/set_dont_touch.tcl} "source set_dont_touch.tcl"
+run_or_die {source -e -v ./scripts/set_false_path.tcl} "source set_false_path.tcl"
+run_or_die {source -e -v ./scripts/set_dont_use.tcl} "source set_dont_use.tcl"
+run_or_die {source -e -v ./scripts/operation_conditions.tcl} "source operation_conditions.tcl"
 
 check_design > ./rpt/$RUN_TAG/check_design.rpt
+run_or_die {
+  fail_if_report_matches ./rpt/$RUN_TAG/check_design.rpt [list {unresolved references} {Unable to resolve reference}] "pre-compile design check"
+} "pre-compile unresolved reference check"
 check_timing > ./rpt/$RUN_TAG/check_timing.pre.rpt
 report_clocks > ./rpt/$RUN_TAG/clocks.rpt
 
-group_path -name INPUT_GROUP -from [all_inputs]
-group_path -name OUTPUT_GROUP -to [all_outputs]
+run_or_die {group_path -name INPUT_GROUP -from [all_inputs]} "group input paths"
+run_or_die {group_path -name OUTPUT_GROUP -to [all_outputs]} "group output paths"
 
-compile_ultra {*}$DC_COMPILE_OPTIONS
+run_or_die {compile_ultra {*}$DC_COMPILE_OPTIONS} "compile_ultra"
 
-set_fix_multiple_port_nets -all -buffer_constants
-set_fix_multiple_port_nets -all -buffer_constants [all_designs]
+run_or_die {set_fix_multiple_port_nets -all -buffer_constants} "fix multiple port nets"
+run_or_die {set_fix_multiple_port_nets -all -buffer_constants [all_designs]} "fix multiple port nets across designs"
 
-change_names -hier -rules verilog
+run_or_die {change_names -hier -rules verilog} "change_names"
 
-write_sdc ./outputs/$RUN_TAG/${TOP_MODULE}.sdc
-write -format ddc -hierarchy -output ./outputs/$RUN_TAG/${TOP_MODULE}.ddc
-write -format verilog -hierarchy -output ./outputs/$RUN_TAG/${TOP_MODULE}.v
-write_link_library -out ./outputs/$RUN_TAG/link_library.txt
+run_or_die {write_sdc ./outputs/$RUN_TAG/${TOP_MODULE}.sdc} "write SDC"
+run_or_die {write -format ddc -hierarchy -output ./outputs/$RUN_TAG/${TOP_MODULE}.ddc} "write DDC"
+run_or_die {write -format verilog -hierarchy -output ./outputs/$RUN_TAG/${TOP_MODULE}.v} "write mapped Verilog"
+run_or_die {write_link_library -out ./outputs/$RUN_TAG/link_library.txt} "write link library"
 
 report_constraint -all_vio > ./rpt/$RUN_TAG/constraint.rpt
 report_constraint -all_violators > ./rpt/$RUN_TAG/${TOP_MODULE}_constraint_all_violators.rpt
@@ -70,5 +117,11 @@ report_area -hier > ./rpt/$RUN_TAG/area.rpt
 report_power -hierarchy > ./rpt/$RUN_TAG/${TOP_MODULE}_power.rpt
 report_cell > ./rpt/$RUN_TAG/${TOP_MODULE}_cell.rpt
 report_reference > ./rpt/$RUN_TAG/${TOP_MODULE}_ref.rpt
+
+set POWER_NETLIST_DIR [file join $PROJECT_ROOT 3_POWER netlist]
+run_or_die {
+  set copied_netlist_files [copy_generated_netlist_outputs ./outputs/$RUN_TAG $POWER_NETLIST_DIR]
+} "copy generated netlist outputs to 3_POWER/netlist"
+puts "Copied [llength $copied_netlist_files] generated netlist output files to $POWER_NETLIST_DIR"
 
 puts "DC run complete: $RUN_TAG"

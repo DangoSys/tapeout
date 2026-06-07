@@ -4,8 +4,26 @@ set -eu
 RUN_TAG="${RUN_TAG:-$(date +%m%d_%H%M)}"
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 . "$SCRIPT_DIR/../config/env.sh"
+cd "$SCRIPT_DIR"
 
 mkdir -p logs outputs rpt
 mkdir -p "outputs/$RUN_TAG" "rpt/$RUN_TAG"
 
-pt_shell -f ./scripts/ptpx.tcl -x "set RUN_TAG $RUN_TAG" | tee "logs/ptpx_${RUN_TAG}.log"
+TOP_MODULE="${PTPX_TOP_MODULE:-BuckyballAccelerator}"
+NETLIST_FILE="${PTPX_NETLIST_FILE:-$SCRIPT_DIR/netlist/${TOP_MODULE}.v}"
+SDC_FILE="${PTPX_SDC_FILE:-$SCRIPT_DIR/netlist/${TOP_MODULE}.sdc}"
+ACTIVITY_FILE="${PTPX_ACTIVITY_FILE:-$SCRIPT_DIR/waveform/waveform_part.vcd}"
+ACTIVITY_FORMAT="${PTPX_ACTIVITY_FORMAT:-vcd}"
+STRIP_PATH="${PTPX_STRIP_PATH:-TOP/BBSimHarness/chiptop0}"
+
+if [ "$ACTIVITY_FORMAT" = "vcd" ] && [ "${PTPX_SANITIZE_VCD:-1}" != "0" ]; then
+  CLEAN_ACTIVITY_FILE="$SCRIPT_DIR/outputs/$RUN_TAG/waveform_part.ptpx.vcd"
+  python3 ./scripts/sanitize_vcd_for_ptpx.py "$ACTIVITY_FILE" -o "$CLEAN_ACTIVITY_FILE"
+  ACTIVITY_FILE="$CLEAN_ACTIVITY_FILE"
+fi
+
+LOG_FILE="logs/ptpx_${RUN_TAG}.log"
+TOP_MODULE="$TOP_MODULE" \
+pt_shell -f ./scripts/ptpx.tcl \
+  -x "set RUN_TAG {$RUN_TAG}; set PTPX_RUN_NETLIST_FILE {$NETLIST_FILE}; set PTPX_RUN_SDC_FILE {$SDC_FILE}; set PTPX_RUN_ACTIVITY_FILE {$ACTIVITY_FILE}; set PTPX_RUN_ACTIVITY_FORMAT {$ACTIVITY_FORMAT}; set PTPX_RUN_STRIP_PATH {$STRIP_PATH}" \
+  | tee "$LOG_FILE"

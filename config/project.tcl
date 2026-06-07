@@ -4,20 +4,27 @@
 set PROJECT_ROOT [file normalize [file join [file dirname [info script]] ..]]
 
 set TOP_MODULE ChipTop
+if {[info exists env(TOP_MODULE)] && $env(TOP_MODULE) ne ""} {
+  set TOP_MODULE $env(TOP_MODULE)
+}
 set RTL_FILELIST [file join $PROJECT_ROOT config rtl.f]
 set RTL_SEARCH_PATHS [list \
-  [file join $PROJECT_ROOT 0_RTL sims.verilator.BuckyballToyVerilatorConfig] \
+  [file join $PROJECT_ROOT 0_RTL] \
   [file join $PROJECT_ROOT verilog] \
 ]
 
 set RTL_DEFINES [list SYNTHESIS DC_SYN]
 set RTL_INCLUDE_DIRS $RTL_SEARCH_PATHS
 set EXTRA_RTL_FILES [list \
-  [file join $PROJECT_ROOT verilog sram_replacements.sv] \
+  [file join $PROJECT_ROOT 0_RTL sram_replacements.sv] \
 ]
 
-# Fill these with foundry/IP deliverables before running commercial tools.
-set TARGET_LIBRARY_FILES [list]
+set STD_CELL_TT_DB \
+  /data0/tsmc28/TSMC28/logic/tcbn28hpcplusbwp40p140_180b/AN61001_20180509/TSMCHOME/digital/Front_End/timing_power_noise/NLDM/tcbn28hpcplusbwp40p140_180a/tcbn28hpcplusbwp40p140tt0p9v25c.db
+
+set TARGET_LIBRARY_FILES [list \
+  $STD_CELL_TT_DB \
+]
 set SYMBOL_LIBRARY_FILES [list]
 set SYNTHETIC_LIBRARY_FILES [list \
   /data2/tools/syn/R-2020.09-SP5/libraries/syn/dw_foundation.sldb \
@@ -30,8 +37,22 @@ set SYNTHETIC_LIBRARY_FILES [list \
 set SRAM_LIBRARY_FILES [list]
 set SRAM_VERILOG_FILES [list]
 
-set CLOCK_PORT clock
-set CLOCK_NAME clock
+set REAL_SRAM_LIBRARY_FRAGMENT [file join $PROJECT_ROOT 0_RTL real_sram_libs sram_library_files.tcl]
+if {[file exists $REAL_SRAM_LIBRARY_FRAGMENT]} {
+  source -e -v $REAL_SRAM_LIBRARY_FRAGMENT
+  if {[info exists REAL_SRAM_DB_FILES]} {
+    set SRAM_LIBRARY_FILES $REAL_SRAM_DB_FILES
+  }
+}
+
+set CLOCK_PORT clock_uncore
+set CLOCK_NAME clock_uncore
+if {[info exists env(CLOCK_PORT)] && $env(CLOCK_PORT) ne ""} {
+  set CLOCK_PORT $env(CLOCK_PORT)
+}
+if {[info exists env(CLOCK_NAME)] && $env(CLOCK_NAME) ne ""} {
+  set CLOCK_NAME $env(CLOCK_NAME)
+}
 set CLOCK_PERIOD_NS 1.0
 set CLOCK_UNCERTAINTY_RATIO 0.30
 set CLOCK_TRANSITION_RATIO 0.10

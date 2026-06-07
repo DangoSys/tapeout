@@ -9,6 +9,9 @@
 *.sdf
 *.ddc
 *.db
+*.v
+*.sv
+*.f
 
 **/alib-52/
 **/elab/
@@ -24,6 +27,7 @@
 **/crte_*.txt
 **/Synopsys_*.adi
 **/Synopsys_stack_trace_*.txt
+**/__pycache__/
 
 !**/logs/.gitkeep
 !**/outputs/.gitkeep

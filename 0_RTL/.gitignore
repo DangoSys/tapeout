@@ -5,3 +5,5 @@
 *.vcd
 *.v
 *.sv
+*.f
+real_sram_libs/

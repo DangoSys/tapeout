@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-RUN_TAG="${RUN_TAG:-$(date +%m%d_%H%M)}"
+RUN_TAG="${RUN_TAG:-$(date +%m%d_%H%M)_buckyball_accel}"
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 . "$SCRIPT_DIR/../config/env.sh"
 cd "$SCRIPT_DIR"
@@ -10,12 +10,15 @@ mkdir -p alib-52 elab logs outputs rpt
 rm -rf elab/*
 mkdir -p "outputs/$RUN_TAG" "rpt/$RUN_TAG"
 
-# Keep the generated synthesis filelist and SRAM wrappers in sync with the
-# latest manifests before launching DC.
 python3 ./scripts/sramReplace.py
 
 LOG_FILE="logs/dc_${RUN_TAG}.log"
-dc_shell -f ./scripts/dc.tcl -x "set RUN_TAG $RUN_TAG" | tee "$LOG_FILE"
+TOP_MODULE=BuckyballAccelerator \
+CLOCK_PORT=clock \
+CLOCK_NAME=clock \
+dc_shell -f ./scripts/dc.tcl \
+  -x "set RUN_TAG {$RUN_TAG}" \
+  | tee "$LOG_FILE"
 
 if grep -E "FATAL:|^Error:|Unable to resolve reference|has '[0-9]+' unresolved references|Cannot recover|Presto compilation terminated" "$LOG_FILE" >/dev/null; then
   echo "DC run reported fatal errors or unresolved references; see $LOG_FILE" >&2

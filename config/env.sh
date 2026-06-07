@@ -9,8 +9,8 @@ export VCS_HOME="${VCS_HOME:-/data0/tools/Synopsys/vcs/vcs/W-2024.09-SP1}"
 export VERDI_HOME="${VERDI_HOME:-/data0/tools/Synopsys/verdi/verdi/W-2024.09-SP1}"
 export SCL_HOME="${SCL_HOME:-/data0/tools/Synopsys/scl/scl/2024.06}"
 
-export SNPSLMD_LICENSE_FILE="${SNPSLMD_LICENSE_FILE:-27000@amax}"
-export LM_LICENSE_FILE="${LM_LICENSE_FILE:-/data0/tools/Synopsys/lic/Synopsys.dat}"
+export SNPSLMD_LICENSE_FILE="${SNPSLMD_LICENSE_FILE_OVERRIDE:-26000@amax}"
+export LM_LICENSE_FILE="${LM_LICENSE_FILE_OVERRIDE:-/data0/tools/Synopsys/lic/Synopsys.dat}"
 
 prepend_path() {
   case ":$PATH:" in
