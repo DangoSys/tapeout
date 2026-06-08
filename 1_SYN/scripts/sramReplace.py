@@ -3,7 +3,7 @@
 
 The real SRAM compiler flow writes manifests under 0_RTL/real_sram_libs.
 This script consumes those manifests and emits:
-  * 0_RTL/sram_replacements.sv
+  * 0_RTL/generated/sram_replacements.sv
   * config/rtl.f
 
 Supported SRAM modules are replaced by thin wrappers around the physical
@@ -31,10 +31,11 @@ RTL_SOURCE_DIRS = (
 REAL_SRAM_DIR = RTL_DIR / "real_sram_libs"
 DEFAULT_MANIFEST = REAL_SRAM_DIR / "macro_manifest.csv"
 DEFAULT_RTL_MANIFEST = REAL_SRAM_DIR / "rtl_sram_manifest.csv"
-DEFAULT_OUT = RTL_DIR / "sram_replacements.sv"
+GENERATED_RTL_DIR = RTL_DIR / "generated"
+DEFAULT_OUT = GENERATED_RTL_DIR / "sram_replacements.sv"
 DEFAULT_FILELIST = REPO_ROOT / "config" / "rtl.f"
 SOURCE_FILELIST = RTL_DIR / "RTL" / "filelist.f"
-SYNTHESIS_STUBS = RTL_DIR / "synthesis_stubs.sv"
+SYNTHESIS_STUBS = GENERATED_RTL_DIR / "synthesis_stubs.sv"
 
 SYNTHESIS_EXCLUDED_MODULES = {
     "BackdoorGetReadAddrDPI",
@@ -513,6 +514,7 @@ def generate_replacements(manifest: Path, rtl_manifest: Path, out_path: Path) ->
             continue
         replaced.add(module)
 
+    out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text("\n".join(lines))
     for module, source in skipped_missing_source:
         print(f"Warning: skipping SRAM replacement for {module}; source RTL not found: {source}")

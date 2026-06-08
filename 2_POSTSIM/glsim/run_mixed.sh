@@ -3,8 +3,7 @@ set -eu
 
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-POSTSIM_STAGE_DIR=${POSTSIM_STAGE_DIR:-${PRESIM_STAGE_DIR:-$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)}}
-PRESIM_STAGE_DIR=${PRESIM_STAGE_DIR:-$POSTSIM_STAGE_DIR}
+POSTSIM_STAGE_DIR=${POSTSIM_STAGE_DIR:-$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)}
 GLSIM_DIR=${GLSIM_DIR:-$SCRIPT_DIR}
 BUILD_DIR=${BUILD_DIR:-$GLSIM_DIR/build}
 SIMV=${SIMV:-$BUILD_DIR/simv_mixed}

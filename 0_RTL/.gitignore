@@ -3,7 +3,6 @@
 *.saif
 *.log
 *.vcd
-*.v
-*.sv
-*.f
+RTL/
+generated/
 real_sram_libs/

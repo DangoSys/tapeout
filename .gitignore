@@ -9,9 +9,10 @@
 *.sdf
 *.ddc
 *.db
-*.v
-*.sv
-*.f
+
+0_RTL/RTL/
+0_RTL/generated/
+config/rtl.f
 
 **/alib-52/
 **/elab/

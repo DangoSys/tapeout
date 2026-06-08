@@ -16,16 +16,14 @@ proc env_or_default {name default} {
 
 set CONFIG_DIR_NAME [env_or_default CONFIG_DIR_NAME config]
 set RTL_STAGE_DIR_NAME [env_or_default RTL_STAGE_DIR_NAME 0_RTL]
-set PRESIM_STAGE_DIR_NAME [env_or_default PRESIM_STAGE_DIR_NAME [env_or_default POSTSIM_STAGE_DIR_NAME 2_POSTSIM]]
-set POSTSIM_STAGE_DIR_NAME [env_or_default POSTSIM_STAGE_DIR_NAME $PRESIM_STAGE_DIR_NAME]
+set POSTSIM_STAGE_DIR_NAME [env_or_default POSTSIM_STAGE_DIR_NAME 2_POSTSIM]
 set SYN_STAGE_DIR_NAME [env_or_default SYN_STAGE_DIR_NAME 1_SYN]
 set POWER_STAGE_DIR_NAME [env_or_default POWER_STAGE_DIR_NAME 3_POWER]
 set FM_STAGE_DIR_NAME [env_or_default FM_STAGE_DIR_NAME 4_FM]
 
 set CONFIG_DIR [file normalize [env_or_default CONFIG_DIR [file join $PROJECT_ROOT $CONFIG_DIR_NAME]]]
 set RTL_STAGE_DIR [file normalize [env_or_default RTL_STAGE_DIR [file join $PROJECT_ROOT $RTL_STAGE_DIR_NAME]]]
-set PRESIM_STAGE_DIR [file normalize [env_or_default PRESIM_STAGE_DIR [env_or_default POSTSIM_STAGE_DIR [file join $PROJECT_ROOT $PRESIM_STAGE_DIR_NAME]]]]
-set POSTSIM_STAGE_DIR [file normalize [env_or_default POSTSIM_STAGE_DIR $PRESIM_STAGE_DIR]]
+set POSTSIM_STAGE_DIR [file normalize [env_or_default POSTSIM_STAGE_DIR [file join $PROJECT_ROOT $POSTSIM_STAGE_DIR_NAME]]]
 set SYN_STAGE_DIR [file normalize [env_or_default SYN_STAGE_DIR [file join $PROJECT_ROOT $SYN_STAGE_DIR_NAME]]]
 set POWER_STAGE_DIR [file normalize [env_or_default POWER_STAGE_DIR [file join $PROJECT_ROOT $POWER_STAGE_DIR_NAME]]]
 set FM_STAGE_DIR [file normalize [env_or_default FM_STAGE_DIR [file join $PROJECT_ROOT $FM_STAGE_DIR_NAME]]]
@@ -43,7 +41,7 @@ set RTL_SEARCH_PATHS [list \
 set RTL_DEFINES [list SYNTHESIS DC_SYN]
 set RTL_INCLUDE_DIRS $RTL_SEARCH_PATHS
 set EXTRA_RTL_FILES [list \
-  [file join $RTL_STAGE_DIR sram_replacements.sv] \
+  [file join $RTL_STAGE_DIR generated sram_replacements.sv] \
 ]
 
 set STD_CELL_TT_DB \
