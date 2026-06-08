@@ -366,6 +366,110 @@ module tb_glsim_mixed;
 	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.n4;
 	      automatic logic sched_complete_is_sub =
 	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.n_completeArb_io_out_bits_is_sub;
+	      automatic logic dec_is_fence =
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.io_decode_cmd_i_bits_isFence;
+	      automatic logic dec_is_barrier =
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.io_decode_cmd_i_bits_isBarrier;
+	      automatic logic [15:0] rob_valid =
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.n_GEN;
+	      automatic logic [15:0] rob_complete =
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.n_GEN_1;
+	      automatic logic [15:0] rob_issued =
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.n_GEN_11;
+	      automatic logic [3:0] rob_tail =
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.tailAlias;
+	      automatic logic [3:0] rob_ptr =
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.ptr;
+	      automatic logic [3:0] rob_issue_id =
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.io_issue_bits_rob_id;
+	      automatic logic [3:0] rob_issue_domain =
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.io_issue_bits_cmd_domain_id;
+	      automatic logic [6:0] rob_issue_funct =
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.io_issue_bits_cmd_cmd_funct;
+	      automatic logic [15:0] rob_hazard = {
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.n_scoreboard_hazardVec_15,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.n_scoreboard_hazardVec_14,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.n_scoreboard_hazardVec_13,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.n_scoreboard_hazardVec_12,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.n_scoreboard_hazardVec_11,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.n_scoreboard_hazardVec_10,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.n_scoreboard_hazardVec_9,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.n_scoreboard_hazardVec_8,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.n_scoreboard_hazardVec_7,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.n_scoreboard_hazardVec_6,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.n_scoreboard_hazardVec_5,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.n_scoreboard_hazardVec_4,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.n_scoreboard_hazardVec_3,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.n_scoreboard_hazardVec_2,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.n_scoreboard_hazardVec_1,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.n_scoreboard_hazardVec_0
+	      };
+	      automatic logic [15:0] rob_commit = {
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.commitMask_15,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.commitMask_14,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.commitMask_13,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.commitMask_12,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.commitMask_11,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.commitMask_10,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.commitMask_9,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.commitMask_8,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.commitMask_7,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.commitMask_6,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.commitMask_5,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.commitMask_4,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.commitMask_3,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.commitMask_2,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.commitMask_1,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.commitMask_0
+	      };
+	      automatic logic [31:0] rob_domain_bits =
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.n_GEN_4;
+	      automatic logic [111:0] rob_funct_bits =
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.n_GEN_6;
+	      automatic logic [15:0] rob_rd0v =
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.n_GEN_16;
+	      automatic logic [15:0] rob_rd1v =
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.n_GEN_18;
+	      automatic logic [15:0] rob_wrv =
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.n_GEN_20;
+	      automatic logic [31:0] scoreboard_wr_busy =
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.scoreboard.n_GEN;
+	      automatic logic [15:0] scoreboard_q0v = {
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.n_67_net_,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.n_63_net_,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.n_59_net_,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.n_55_net_,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.n_51_net_,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.n_47_net_,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.n_43_net_,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.n_39_net_,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.n_35_net_,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.n_31_net_,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.n_27_net_,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.n_23_net_,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.n_19_net_,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.n_15_net_,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.n_11_net_,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.n_7_net_
+	      };
+	      automatic logic [15:0] scoreboard_q1v = {
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.n_69_net_,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.n_65_net_,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.n_61_net_,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.n_57_net_,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.n_53_net_,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.n_49_net_,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.n_45_net_,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.n_41_net_,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.n_37_net_,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.n_33_net_,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.n_29_net_,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.n_25_net_,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.n_21_net_,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.n_17_net_,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.n_13_net_,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.frontend.scheduler.rob.n_9_net_
+	      };
 	      automatic logic ball_issue_valid =
 	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.n_frontend_io_ball_issue_o_valid;
 	      automatic logic ball_issue_ready =
@@ -394,6 +498,134 @@ module tb_glsim_mixed;
 	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.frontend.n_memRs_io_issue_o_cf_valid;
 	      automatic logic mem_cf_req_mmio_set =
 	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.frontend.n_memRs_io_issue_o_cf_bits_cmd_is_mmio_set;
+	      automatic logic cfg_valid =
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.n_frontend_io_config_valid;
+	      automatic logic cfg_ready =
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.n_backend_io_config_ready;
+	      automatic logic [4:0] cfg_vbank =
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.n_frontend_io_config_bits_vbank_id;
+	      automatic logic cfg_shared =
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.n_frontend_io_config_bits_is_shared;
+	      automatic logic cfg_multi =
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.n_frontend_io_config_bits_is_multi;
+	      automatic logic cfg_alloc =
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.n_frontend_io_config_bits_alloc;
+	      automatic logic [2:0] cfg_group =
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.n_frontend_io_config_bits_group_id;
+	      automatic logic cfg_priv_valid =
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.n_28_net_;
+	      automatic logic cfg_priv_ready =
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.n_privateBackend_io_config_ready;
+	      automatic logic [1:0] priv_clear_state =
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.clearState;
+	      automatic logic [6:0] priv_clear_addr =
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.clearAddr;
+	      automatic logic [4:0] priv_clear_pbank =
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.clearPbank;
+	      automatic logic [2:0] priv_idle_cycles =
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.idleCycles;
+	      automatic logic [31:0] priv_clear_wvalid = {
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_GEN_315,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_GEN_313,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_GEN_311,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_GEN_309,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_GEN_307,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_GEN_305,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_GEN_303,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_GEN_301,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_GEN_299,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_GEN_297,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_GEN_295,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_GEN_293,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_GEN_291,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_GEN_289,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_GEN_287,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_GEN_285,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_GEN_283,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_GEN_281,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_GEN_279,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_GEN_277,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_GEN_275,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_GEN_273,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_GEN_271,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_GEN_269,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_GEN_267,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_GEN_265,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_GEN_263,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_GEN_261,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_GEN_259,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_GEN_257,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_GEN_255,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_GEN_253
+	      };
+	      automatic logic [31:0] priv_clear_wready = {
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_banks_31_io_sramWrite_req_ready,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_banks_30_io_sramWrite_req_ready,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_banks_29_io_sramWrite_req_ready,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_banks_28_io_sramWrite_req_ready,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_banks_27_io_sramWrite_req_ready,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_banks_26_io_sramWrite_req_ready,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_banks_25_io_sramWrite_req_ready,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_banks_24_io_sramWrite_req_ready,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_banks_23_io_sramWrite_req_ready,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_banks_22_io_sramWrite_req_ready,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_banks_21_io_sramWrite_req_ready,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_banks_20_io_sramWrite_req_ready,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_banks_19_io_sramWrite_req_ready,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_banks_18_io_sramWrite_req_ready,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_banks_17_io_sramWrite_req_ready,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_banks_16_io_sramWrite_req_ready,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_banks_15_io_sramWrite_req_ready,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_banks_14_io_sramWrite_req_ready,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_banks_13_io_sramWrite_req_ready,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_banks_12_io_sramWrite_req_ready,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_banks_11_io_sramWrite_req_ready,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_banks_10_io_sramWrite_req_ready,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_banks_9_io_sramWrite_req_ready,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_banks_8_io_sramWrite_req_ready,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_banks_7_io_sramWrite_req_ready,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_banks_6_io_sramWrite_req_ready,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_banks_5_io_sramWrite_req_ready,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_banks_4_io_sramWrite_req_ready,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_banks_3_io_sramWrite_req_ready,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_banks_2_io_sramWrite_req_ready,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_banks_1_io_sramWrite_req_ready,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_banks_0_io_sramWrite_req_ready
+	      };
+	      automatic logic [31:0] priv_clear_wresp = {
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_banks_31_io_sramWrite_resp_valid,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_banks_30_io_sramWrite_resp_valid,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_banks_29_io_sramWrite_resp_valid,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_banks_28_io_sramWrite_resp_valid,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_banks_27_io_sramWrite_resp_valid,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_banks_26_io_sramWrite_resp_valid,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_banks_25_io_sramWrite_resp_valid,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_banks_24_io_sramWrite_resp_valid,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_banks_23_io_sramWrite_resp_valid,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_banks_22_io_sramWrite_resp_valid,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_banks_21_io_sramWrite_resp_valid,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_banks_20_io_sramWrite_resp_valid,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_banks_19_io_sramWrite_resp_valid,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_banks_18_io_sramWrite_resp_valid,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_banks_17_io_sramWrite_resp_valid,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_banks_16_io_sramWrite_resp_valid,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_banks_15_io_sramWrite_resp_valid,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_banks_14_io_sramWrite_resp_valid,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_banks_13_io_sramWrite_resp_valid,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_banks_12_io_sramWrite_resp_valid,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_banks_11_io_sramWrite_resp_valid,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_banks_10_io_sramWrite_resp_valid,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_banks_9_io_sramWrite_resp_valid,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_banks_8_io_sramWrite_resp_valid,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_banks_7_io_sramWrite_resp_valid,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_banks_6_io_sramWrite_resp_valid,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_banks_5_io_sramWrite_resp_valid,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_banks_4_io_sramWrite_resp_valid,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_banks_3_io_sramWrite_resp_valid,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_banks_2_io_sramWrite_resp_valid,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_banks_1_io_sramWrite_resp_valid,
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.backend.privateBackend.n_banks_0_io_sramWrite_resp_valid
+	      };
 	      automatic logic mem_cf_n134 =
 	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.frontend.configer.n134;
 	      automatic logic mem_cf_n181 =
@@ -416,6 +648,16 @@ module tb_glsim_mixed;
 	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.frontend.memRs.fifo.deq_ptr_value;
 	      automatic logic mem_rs_fifo_maybe_full =
 	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.frontend.memRs.fifo.maybe_full;
+	      automatic logic mem_rs_ram_wen =
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.frontend.memRs.fifo.ram_ext.W0_en;
+	      automatic logic [1:0] mem_rs_ram_waddr =
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.frontend.memRs.fifo.ram_ext.W0_addr;
+	      automatic logic [1:0] mem_rs_ram_raddr =
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.frontend.memRs.fifo.ram_ext.R0_addr;
+	      automatic logic [160:0] mem_rs_ram_wdata =
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.frontend.memRs.fifo.ram_ext.W0_data;
+	      automatic logic [160:0] mem_rs_ram_rdata =
+	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.frontend.memRs.fifo.ram_ext.R0_data;
 	      automatic logic [2:0] mem_ld_state =
 	        tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0.memDomain.frontend.memLoader.state;
 	      automatic logic [2:0] mem_st_state =
@@ -446,6 +688,26 @@ module tb_glsim_mixed;
 	        || $isunknown(sched_barrier_release)
 	        || $isunknown(sched_complete_valid)
 	        || $isunknown(sched_complete_is_sub)
+	        || $isunknown(dec_is_fence)
+	        || $isunknown(dec_is_barrier)
+	        || $isunknown(rob_valid)
+	        || $isunknown(rob_complete)
+	        || $isunknown(rob_issued)
+	        || $isunknown(rob_tail)
+	        || $isunknown(rob_ptr)
+	        || $isunknown(rob_issue_id)
+	        || $isunknown(rob_issue_domain)
+	        || $isunknown(rob_issue_funct)
+	        || $isunknown(rob_hazard)
+	        || $isunknown(rob_commit)
+	        || $isunknown(rob_domain_bits)
+	        || $isunknown(rob_funct_bits)
+	        || $isunknown(rob_rd0v)
+	        || $isunknown(rob_rd1v)
+	        || $isunknown(rob_wrv)
+	        || $isunknown(scoreboard_wr_busy)
+	        || $isunknown(scoreboard_q0v)
+	        || $isunknown(scoreboard_q1v)
 	        || $isunknown(ball_issue_valid)
 	        || $isunknown(ball_issue_ready)
 	        || $isunknown(ball_complete_valid)
@@ -460,6 +722,22 @@ module tb_glsim_mixed;
 	        || $isunknown(mem_cf_resp_valid)
 	        || $isunknown(mem_cf_req_valid)
 	        || $isunknown(mem_cf_req_mmio_set)
+	        || $isunknown(cfg_valid)
+	        || $isunknown(cfg_ready)
+	        || $isunknown(cfg_vbank)
+	        || $isunknown(cfg_shared)
+	        || $isunknown(cfg_multi)
+	        || $isunknown(cfg_alloc)
+	        || $isunknown(cfg_group)
+	        || $isunknown(cfg_priv_valid)
+	        || $isunknown(cfg_priv_ready)
+	        || $isunknown(priv_clear_state)
+	        || $isunknown(priv_clear_addr)
+	        || $isunknown(priv_clear_pbank)
+	        || $isunknown(priv_idle_cycles)
+	        || $isunknown(priv_clear_wvalid)
+	        || $isunknown(priv_clear_wready)
+	        || $isunknown(priv_clear_wresp)
 	        || $isunknown(mem_cf_n134)
 	        || $isunknown(mem_cf_n181)
 	        || $isunknown(mem_cf_n180)
@@ -471,6 +749,11 @@ module tb_glsim_mixed;
 	        || $isunknown(mem_rs_fifo_enq_ptr)
 	        || $isunknown(mem_rs_fifo_deq_ptr)
 	        || $isunknown(mem_rs_fifo_maybe_full)
+	        || $isunknown(mem_rs_ram_wen)
+	        || $isunknown(mem_rs_ram_waddr)
+	        || $isunknown(mem_rs_ram_raddr)
+	        || $isunknown(mem_rs_ram_wdata)
+	        || $isunknown(mem_rs_ram_rdata)
 	        || $isunknown(mem_ld_state)
 	        || $isunknown(mem_st_state)
 	        || $isunknown(mem_cf_state)
@@ -490,7 +773,7 @@ module tb_glsim_mixed;
 
 	      if (!tile_reset && interesting) begin
 	        $fwrite(rocc_fd,
-	                "time=%0t tb_cycle=%0d cmd=%b/%b pc=%016h funct=%02h rs1=%0d rs2=%0d opcode=%02h rs1Data=%016h rs2Data=%016h busy=%b interrupt=%b rocc_blocked=%b sched_dec=%b sched_alloc=%b/%b sched_issue=%b/%b sched_empty=%b sched_full=%b fence=%b barrier=%b/%b complete=%b/%b ball=%b/%b/%b mem=%b/%b/%b mem_resp(ld/st/cf)=%b/%b/%b ready=%b/%b/%b cf_req=%b/%b cf_int(n134/n181/n180/n152)=%b/%b/%b/%b memrs_fifo(deq_r/v/cfg/mmio,ptrs,full)=%b/%b/%b/%b,%b/%b,%b mem_state(ld/st/cf)=%b/%b/%b gp=%b/%b/%b has_x=%0d\n",
+	                "time=%0t tb_cycle=%0d cmd=%b/%b pc=%016h funct=%02h rs1=%0d rs2=%0d opcode=%02h rs1Data=%016h rs2Data=%016h busy=%b interrupt=%b rocc_blocked=%b sched_dec=%b sched_alloc=%b/%b sched_issue=%b/%b sched_empty=%b sched_full=%b fence=%b barrier=%b/%b dec(fe/bar)=%b/%b complete=%b/%b rob(valid/issued/complete,tail/ptr,issue_id/domain/funct)=%04h/%04h/%04h,%0d/%0d,%0d/%0d/%02h rob2(hazard/commit,dom,funct,rd0/rd1/wr)=%04h/%04h,%08h,%028h,%04h/%04h/%04h sb(wrBusy,q0v/q1v)=%08h,%04h/%04h ball=%b/%b/%b mem=%b/%b/%b mem_resp(ld/st/cf)=%b/%b/%b ready=%b/%b/%b cf_req=%b/%b cfg(v/r,vbank,shr/mul/alloc,grp,priv_v/r)=%b/%b,%02h,%b/%b/%b,%0d,%b/%b priv_clear(st,addr,pbank,idle,wv/wr/wresp)=%b,%0d,%0d,%0d,%08h/%08h/%08h cf_int(n134/n181/n180/n152)=%b/%b/%b/%b memrs_fifo(deq_r/v/cfg/mmio,ptrs,full)=%b/%b/%b/%b,%b/%b,%b memrs_ram(wen,waddr/raddr,wdata_lo,rdata_lo)=%b,%0d/%0d,%016h,%016h mem_state(ld/st/cf)=%b/%b/%b gp=%b/%b/%b has_x=%0d\n",
 	                $time,
 	                cycle,
 	                cmd_valid,
@@ -515,8 +798,28 @@ module tb_glsim_mixed;
 	                sched_fence,
 	                sched_barrier_rob,
 	                sched_barrier_release,
+	                dec_is_fence,
+	                dec_is_barrier,
 	                sched_complete_valid,
 	                sched_complete_is_sub,
+	                rob_valid,
+	                rob_issued,
+	                rob_complete,
+	                rob_tail,
+	                rob_ptr,
+	                rob_issue_id,
+	                rob_issue_domain,
+	                rob_issue_funct,
+	                rob_hazard,
+	                rob_commit,
+	                rob_domain_bits,
+	                rob_funct_bits,
+	                rob_rd0v,
+	                rob_rd1v,
+	                rob_wrv,
+	                scoreboard_wr_busy,
+	                scoreboard_q0v,
+	                scoreboard_q1v,
 	                ball_issue_valid,
 	                ball_issue_ready,
 	                ball_complete_valid,
@@ -531,6 +834,22 @@ module tb_glsim_mixed;
 	                mem_cf_resp_ready,
 	                mem_cf_req_valid,
 	                mem_cf_req_mmio_set,
+	                cfg_valid,
+	                cfg_ready,
+	                cfg_vbank,
+	                cfg_shared,
+	                cfg_multi,
+	                cfg_alloc,
+	                cfg_group,
+	                cfg_priv_valid,
+	                cfg_priv_ready,
+	                priv_clear_state,
+	                priv_clear_addr,
+	                priv_clear_pbank,
+	                priv_idle_cycles,
+	                priv_clear_wvalid,
+	                priv_clear_wready,
+	                priv_clear_wresp,
 	                mem_cf_n134,
 	                mem_cf_n181,
 	                mem_cf_n180,
@@ -542,6 +861,11 @@ module tb_glsim_mixed;
 	                mem_rs_fifo_enq_ptr,
 	                mem_rs_fifo_deq_ptr,
 	                mem_rs_fifo_maybe_full,
+	                mem_rs_ram_wen,
+	                mem_rs_ram_waddr,
+	                mem_rs_ram_raddr,
+	                mem_rs_ram_wdata[63:0],
+	                mem_rs_ram_rdata[63:0],
 	                mem_ld_state,
 	                mem_st_state,
 	                mem_cf_state,

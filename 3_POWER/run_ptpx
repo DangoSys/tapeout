@@ -12,15 +12,9 @@ mkdir -p "outputs/$RUN_TAG" "rpt/$RUN_TAG"
 TOP_MODULE="${PTPX_TOP_MODULE:-BuckyballAccelerator}"
 NETLIST_FILE="${PTPX_NETLIST_FILE:-$SCRIPT_DIR/netlist/${TOP_MODULE}.v}"
 SDC_FILE="${PTPX_SDC_FILE:-$SCRIPT_DIR/netlist/${TOP_MODULE}.sdc}"
-ACTIVITY_FILE="${PTPX_ACTIVITY_FILE:-$SCRIPT_DIR/waveform/waveform_part.vcd}"
-ACTIVITY_FORMAT="${PTPX_ACTIVITY_FORMAT:-vcd}"
-STRIP_PATH="${PTPX_STRIP_PATH:-TOP/BBSimHarness/chiptop0}"
-
-if [ "$ACTIVITY_FORMAT" = "vcd" ] && [ "${PTPX_SANITIZE_VCD:-1}" != "0" ]; then
-  CLEAN_ACTIVITY_FILE="$SCRIPT_DIR/outputs/$RUN_TAG/waveform_part.ptpx.vcd"
-  python3 ./scripts/sanitize_vcd_for_ptpx.py "$ACTIVITY_FILE" -o "$CLEAN_ACTIVITY_FILE"
-  ACTIVITY_FILE="$CLEAN_ACTIVITY_FILE"
-fi
+ACTIVITY_FILE="${PTPX_ACTIVITY_FILE:-$SCRIPT_DIR/waveform/glsim_mixed.saif}"
+ACTIVITY_FORMAT="${PTPX_ACTIVITY_FORMAT:-saif}"
+STRIP_PATH="${PTPX_STRIP_PATH:-tb_glsim_mixed/dut/chiptop0/system/tile_prci_domain/element_reset_domain_bbtile/accelerators_0}"
 
 LOG_FILE="logs/ptpx_${RUN_TAG}.log"
 TOP_MODULE="$TOP_MODULE" \

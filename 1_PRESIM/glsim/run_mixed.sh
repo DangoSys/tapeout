@@ -6,16 +6,18 @@ GLSIM_DIR="$ROOT/1_PRESIM/glsim"
 BUILD_DIR=${BUILD_DIR:-$GLSIM_DIR/build}
 SIMV=${SIMV:-$BUILD_DIR/simv_mixed}
 ELF=${ELF:-/home/sjm/buckyball/bb-tests/build/workloads/src/CTest/toy/ctest_vecunit_matmul_random1_singlecore-baremetal}
-CYCLES=${CYCLES:-2000000}
+CYCLES=${CYCLES:-5000000}
 PROGRESS=${PROGRESS:-100000}
 RUN_NAME=${RUN_NAME:-$(date +%m%d_%H%M%S_mixed)}
 OUT_DIR=${OUT_DIR:-$GLSIM_DIR/results/$RUN_NAME}
 TIMINGCHECKS=${TIMINGCHECKS:-0}
 VCD_FILTER=${VCD_FILTER:-1}
 DUMP_VCD=${DUMP_VCD:-1}
+DUMP_FST=${DUMP_FST:-1}
 DUMP_SAIF=${DUMP_SAIF:-1}
 BB_SAIF=${BB_SAIF:-0}
 EXTRA_ARGS=${EXTRA_ARGS:-}
+ZERO_INIT=${ZERO_INIT:-1}
 
 mkdir -p "$OUT_DIR"
 
@@ -51,12 +53,27 @@ else
   VCD_FILE="$OUT_DIR/glsim_mixed.raw.vcd"
   echo "[run] VCD filter enabled: removing accelerator internals"
 fi
+FINAL_VCD_FILE="$OUT_DIR/glsim_mixed.vcd"
+FST_FILE="${FINAL_VCD_FILE%.vcd}.fst"
+if [ "$DUMP_VCD" = "0" ]; then
+  DUMP_FST=0
+fi
+if [ "$DUMP_FST" = "0" ]; then
+  echo "[run] FST disabled"
+else
+  echo "[run] FST enabled: converting VCD to FST"
+fi
 if [ "$DUMP_SAIF" = "0" ]; then
   echo "[run] SAIF disabled"
 elif [ "$BB_SAIF" = "0" ]; then
   echo "[run] SAIF mode: full simulation"
 else
   echo "[run] SAIF mode: BB_SAIF window"
+fi
+
+if [ "$DUMP_FST" != "0" ] && ! command -v vcd2fst >/dev/null 2>&1; then
+  echo "[run] missing vcd2fst; set DUMP_FST=0 to skip FST generation" >&2
+  exit 1
 fi
 
 set -- "$SIMV" \
@@ -73,6 +90,10 @@ set -- "$SIMV" \
 
 if [ "$TIMINGCHECKS" = "0" ]; then
   set -- "$@" +notimingcheck
+fi
+
+if [ "$ZERO_INIT" != "0" ]; then
+  set -- "$@" +vcs+initreg+0
 fi
 
 if [ "$DUMP_VCD" = "0" ]; then
@@ -102,8 +123,15 @@ if [ "$DUMP_VCD" != "0" ] && [ "$VCD_FILTER" != "0" ]; then
   rm -f "$OUT_DIR/glsim_mixed.raw.vcd"
 fi
 
+if [ "$DUMP_FST" != "0" ]; then
+  vcd2fst "$FINAL_VCD_FILE" "$FST_FILE"
+fi
+
 if [ "$DUMP_VCD" != "0" ]; then
-  echo "[run] VCD : $OUT_DIR/glsim_mixed.vcd"
+  echo "[run] VCD : $FINAL_VCD_FILE"
+fi
+if [ "$DUMP_FST" != "0" ]; then
+  echo "[run] FST : $FST_FILE"
 fi
 if [ "$DUMP_SAIF" != "0" ]; then
   echo "[run] SAIF: $OUT_DIR/glsim_mixed.saif"

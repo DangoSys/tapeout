@@ -21,6 +21,8 @@ def main() -> None:
 
     skip = {
         "BuckyballAccelerator.sv",
+        "ram_4x82.sv",
+        "ram_4x161.sv",
     }
 
     out = Path(args.out)

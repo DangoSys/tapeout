@@ -79,13 +79,13 @@ def gate_expr(cell: str, ports: list[str]) -> tuple[str, str]:
     if cell.startswith("OAI31"):
         return out, "~((A1 | A2 | A3) & B)"
     if cell.startswith("IAO21"):
-        return out, "(~A1 & A2) | B"
+        return out, "~((~A1 & ~A2) | B)"
     if cell.startswith("IOA21"):
-        return out, "(~A1 | A2) & B"
+        return out, "~(~(A1 & A2) & B)"
     if cell.startswith("IAO22"):
-        return out, "(~A1 & A2) | (B1 & B2)"
+        return out, "~((~A1 & ~A2) | (B1 & B2))"
     if cell.startswith("IOA22"):
-        return out, "(~A1 | A2) & (B1 | B2)"
+        return out, "(A1 & A2) | ~(B1 | B2)"
     if cell.startswith("IND2"):
         return out, "~(~A1 & B1)"
     if cell.startswith("IND3"):
@@ -117,9 +117,9 @@ def gate_expr(cell: str, ports: list[str]) -> tuple[str, str]:
     if cell.startswith("MAOI222"):
         return out, "~((A & B) | (A & C) | (B & C))"
     if cell.startswith("MAOI22"):
-        return out, "~((A1 & A2) | (B1 & B2))"
+        return out, "~(A1 & A2) & (B1 | B2)"
     if cell.startswith("MOAI22"):
-        return out, "~((A1 | A2) & (B1 | B2))"
+        return out, "~(A1 | A2) | (B1 & B2)"
     if cell.startswith("TIEH"):
         return out, "1'b1"
     if cell.startswith("TIEL"):
@@ -133,17 +133,25 @@ def emit_flop_initial(out_lines: list[str], ports: list[str]) -> None:
     if not (has_q or has_qn):
         return
 
-    out_lines.append("  `ifdef RANDOMIZE_REG_INIT")
-    out_lines.append("    initial begin")
+    out_lines.append("  initial begin")
+    out_lines.append("    `ifdef RANDOMIZE_REG_INIT")
     if has_q:
-        out_lines.append("      Q = $random;")
+        out_lines.append("      Q = `RANDOM;")
     if has_qn:
         if has_q:
             out_lines.append("      QN = ~Q;")
         else:
-            out_lines.append("      QN = $random;")
-    out_lines.append("    end")
-    out_lines.append("  `endif")
+            out_lines.append("      QN = ~`RANDOM;")
+    out_lines.append("    `else")
+    if has_q:
+        out_lines.append("      Q = 1'b0;")
+    if has_qn:
+        if has_q:
+            out_lines.append("      QN = 1'b1;")
+        else:
+            out_lines.append("      QN = 1'b1;")
+    out_lines.append("    `endif")
+    out_lines.append("  end")
 
 
 def main() -> None:
@@ -166,6 +174,9 @@ def main() -> None:
 
     out_lines = [
         "`timescale 1ns/1ps",
+        "`ifndef RANDOM",
+        "  `define RANDOM $random",
+        "`endif",
         "// Auto-generated zero-delay functional models for the BWP40P140 cells",
         "// actually used by the synthesized accelerator netlist.",
         "",
@@ -187,9 +198,9 @@ def main() -> None:
                 out_lines.append("  reg QN;")
             emit_flop_initial(out_lines, ports)
             if "Q" in ports:
-                out_lines.append("  always @(posedge CP) Q <= SA ? DB : DA;")
+                out_lines.append("  always @(posedge CP) Q <= SA ? DA : DB;")
             if "QN" in ports:
-                out_lines.append("  always @(posedge CP) QN <= ~(SA ? DB : DA);")
+                out_lines.append("  always @(posedge CP) QN <= ~(SA ? DA : DB);")
         elif cell.startswith(("EDF", "EDFQ")):
             if "Q" in ports:
                 out_lines.append("  reg Q;")
@@ -208,23 +219,19 @@ def main() -> None:
             if "QN" in ports:
                 out_lines.append("  reg QN;")
             emit_flop_initial(out_lines, ports)
-            out_lines.append("  always @(posedge CP or negedge SN or negedge CN) begin")
-            out_lines.append("    if (!SN) begin")
+            if "CN" in ports and "SN" in ports:
+                out_lines.append("  wire D_i = CN & (D | ~SN);")
+            elif "CN" in ports:
+                out_lines.append("  wire D_i = CN & D;")
+            elif "SN" in ports:
+                out_lines.append("  wire D_i = D | ~SN;")
+            else:
+                out_lines.append("  wire D_i = D;")
+            out_lines.append("  always @(posedge CP) begin")
             if "Q" in ports:
-                out_lines.append("      Q <= 1'b1;")
+                out_lines.append("    Q <= D_i;")
             if "QN" in ports:
-                out_lines.append("      QN <= 1'b0;")
-            out_lines.append("    end else if (!CN) begin")
-            if "Q" in ports:
-                out_lines.append("      Q <= 1'b0;")
-            if "QN" in ports:
-                out_lines.append("      QN <= 1'b1;")
-            out_lines.append("    end else begin")
-            if "Q" in ports:
-                out_lines.append("      Q <= D;")
-            if "QN" in ports:
-                out_lines.append("      QN <= ~D;")
-            out_lines.append("    end")
+                out_lines.append("    QN <= ~D_i;")
             out_lines.append("  end")
         elif cell.startswith(("DFQ", "DFD")):
             if "Q" in ports:
