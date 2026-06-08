@@ -1,12 +1,78 @@
 #!/bin/sh
 set -eu
 
-RUN_TAG="${RUN_TAG:-$(date +%m%d_%H%M)}"
+usage() {
+  cat <<'EOF'
+Usage: run_dc [--top TOP_MODULE] [--help]
+
+Options:
+  --top TOP_MODULE  Synthesis top module. Default: BuckyballAccelerator
+  --help            Show this help.
+
+Environment overrides:
+  RUN_TAG, TOP_MODULE, CLOCK_PORT, CLOCK_NAME
+EOF
+}
+
+TOP_MODULE="${TOP_MODULE:-BuckyballAccelerator}"
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --top)
+      if [ "$#" -lt 2 ] || [ -z "$2" ]; then
+        echo "run_dc: --top requires a module name" >&2
+        exit 2
+      fi
+      TOP_MODULE=$2
+      shift 2
+      ;;
+    --top=*)
+      TOP_MODULE=${1#--top=}
+      if [ -z "$TOP_MODULE" ]; then
+        echo "run_dc: --top requires a module name" >&2
+        exit 2
+      fi
+      shift
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      echo "run_dc: unknown option '$1'" >&2
+      usage >&2
+      exit 2
+      ;;
+  esac
+done
+
+case "$TOP_MODULE" in
+  BuckyballAccelerator)
+    CLOCK_PORT="${CLOCK_PORT:-clock}"
+    CLOCK_NAME="${CLOCK_NAME:-clock}"
+    DEFAULT_RUN_TAG="$(date +%m%d_%H%M)_buckyball"
+    ;;
+  ChipTop)
+    CLOCK_PORT="${CLOCK_PORT:-clock_uncore}"
+    CLOCK_NAME="${CLOCK_NAME:-clock_uncore}"
+    DEFAULT_RUN_TAG="$(date +%m%d_%H%M)"
+    ;;
+  *)
+    DEFAULT_RUN_TAG="$(date +%m%d_%H%M)_$TOP_MODULE"
+    ;;
+esac
+
+RUN_TAG="${RUN_TAG:-$DEFAULT_RUN_TAG}"
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 PROJECT_ROOT=$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)
 CONFIG_DIR=${CONFIG_DIR:-$PROJECT_ROOT/${CONFIG_DIR_NAME:-config}}
 SYN_STAGE_DIR=${SYN_STAGE_DIR:-$SCRIPT_DIR}
-export PROJECT_ROOT CONFIG_DIR SYN_STAGE_DIR
+export PROJECT_ROOT CONFIG_DIR SYN_STAGE_DIR TOP_MODULE
+if [ -n "${CLOCK_PORT:-}" ]; then
+  export CLOCK_PORT
+fi
+if [ -n "${CLOCK_NAME:-}" ]; then
+  export CLOCK_NAME
+fi
 . "$CONFIG_DIR/env.sh"
 cd "$SCRIPT_DIR"
 
@@ -14,12 +80,10 @@ mkdir -p alib-52 elab logs outputs rpt
 rm -rf elab/*
 mkdir -p "outputs/$RUN_TAG" "rpt/$RUN_TAG"
 
-# Keep the generated synthesis filelist and SRAM wrappers in sync with the
-# latest manifests before launching DC.
 python3 ./scripts/sramReplace.py
 
 LOG_FILE="logs/dc_${RUN_TAG}.log"
-dc_shell -f ./scripts/dc.tcl -x "set RUN_TAG $RUN_TAG" | tee "$LOG_FILE"
+dc_shell -f ./scripts/dc.tcl -x "set RUN_TAG {$RUN_TAG}" | tee "$LOG_FILE"
 
 if grep -E "FATAL:|^Error:|Unable to resolve reference|has '[0-9]+' unresolved references|Cannot recover|Presto compilation terminated" "$LOG_FILE" >/dev/null; then
   echo "DC run reported fatal errors or unresolved references; see $LOG_FILE" >&2
