@@ -1,5 +1,17 @@
 set verification_auto_session on
-source -e -v ../config/project.tcl
+set STAGE_DIR [file normalize [file join [pwd]]]
+set PROJECT_ROOT [file normalize [file join $STAGE_DIR ..]]
+if {[info exists env(CONFIG_DIR)] && $env(CONFIG_DIR) ne ""} {
+  set CONFIG_DIR [file normalize $env(CONFIG_DIR)]
+} else {
+  if {[info exists env(CONFIG_DIR_NAME)] && $env(CONFIG_DIR_NAME) ne ""} {
+    set CONFIG_DIR_NAME $env(CONFIG_DIR_NAME)
+  } else {
+    set CONFIG_DIR_NAME config
+  }
+  set CONFIG_DIR [file join $PROJECT_ROOT $CONFIG_DIR_NAME]
+}
+source -e -v [file join $CONFIG_DIR project.tcl]
 
 if {![info exists RUN_TAG]} {
   set RUN_TAG [clock format [clock seconds] -format "%m%d_%H%M"]
@@ -9,7 +21,7 @@ setup_common_libraries
 
 set dc_dir [selected_dc_output_dir]
 set impl_netlist [file join $dc_dir ${TOP_MODULE}.v]
-set svf_file [file join $PROJECT_ROOT 2_SYN default.svf]
+set svf_file [file join $SYN_STAGE_DIR default.svf]
 require_existing_file $impl_netlist "DC implementation netlist"
 
 guide

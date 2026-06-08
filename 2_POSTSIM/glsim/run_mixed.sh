@@ -2,7 +2,10 @@
 set -eu
 
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)
-GLSIM_DIR="$ROOT/1_PRESIM/glsim"
+SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+POSTSIM_STAGE_DIR=${POSTSIM_STAGE_DIR:-${PRESIM_STAGE_DIR:-$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)}}
+PRESIM_STAGE_DIR=${PRESIM_STAGE_DIR:-$POSTSIM_STAGE_DIR}
+GLSIM_DIR=${GLSIM_DIR:-$SCRIPT_DIR}
 BUILD_DIR=${BUILD_DIR:-$GLSIM_DIR/build}
 SIMV=${SIMV:-$BUILD_DIR/simv_mixed}
 ELF=${ELF:-/home/sjm/buckyball/bb-tests/build/workloads/src/CTest/toy/ctest_vecunit_matmul_random1_singlecore-baremetal}

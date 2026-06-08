@@ -1,22 +1,49 @@
 # Shared project configuration for DC/PT/PTPX/FM.
 # Keep machine-specific paths here instead of scattering them through scripts.
 
-set PROJECT_ROOT [file normalize [file join [file dirname [info script]] ..]]
+if {[info exists env(PROJECT_ROOT)] && $env(PROJECT_ROOT) ne ""} {
+  set PROJECT_ROOT [file normalize $env(PROJECT_ROOT)]
+} else {
+  set PROJECT_ROOT [file normalize [file join [file dirname [info script]] ..]]
+}
+
+proc env_or_default {name default} {
+  if {[info exists ::env($name)] && $::env($name) ne ""} {
+    return $::env($name)
+  }
+  return $default
+}
+
+set CONFIG_DIR_NAME [env_or_default CONFIG_DIR_NAME config]
+set RTL_STAGE_DIR_NAME [env_or_default RTL_STAGE_DIR_NAME 0_RTL]
+set PRESIM_STAGE_DIR_NAME [env_or_default PRESIM_STAGE_DIR_NAME [env_or_default POSTSIM_STAGE_DIR_NAME 2_POSTSIM]]
+set POSTSIM_STAGE_DIR_NAME [env_or_default POSTSIM_STAGE_DIR_NAME $PRESIM_STAGE_DIR_NAME]
+set SYN_STAGE_DIR_NAME [env_or_default SYN_STAGE_DIR_NAME 1_SYN]
+set POWER_STAGE_DIR_NAME [env_or_default POWER_STAGE_DIR_NAME 3_POWER]
+set FM_STAGE_DIR_NAME [env_or_default FM_STAGE_DIR_NAME 4_FM]
+
+set CONFIG_DIR [file normalize [env_or_default CONFIG_DIR [file join $PROJECT_ROOT $CONFIG_DIR_NAME]]]
+set RTL_STAGE_DIR [file normalize [env_or_default RTL_STAGE_DIR [file join $PROJECT_ROOT $RTL_STAGE_DIR_NAME]]]
+set PRESIM_STAGE_DIR [file normalize [env_or_default PRESIM_STAGE_DIR [env_or_default POSTSIM_STAGE_DIR [file join $PROJECT_ROOT $PRESIM_STAGE_DIR_NAME]]]]
+set POSTSIM_STAGE_DIR [file normalize [env_or_default POSTSIM_STAGE_DIR $PRESIM_STAGE_DIR]]
+set SYN_STAGE_DIR [file normalize [env_or_default SYN_STAGE_DIR [file join $PROJECT_ROOT $SYN_STAGE_DIR_NAME]]]
+set POWER_STAGE_DIR [file normalize [env_or_default POWER_STAGE_DIR [file join $PROJECT_ROOT $POWER_STAGE_DIR_NAME]]]
+set FM_STAGE_DIR [file normalize [env_or_default FM_STAGE_DIR [file join $PROJECT_ROOT $FM_STAGE_DIR_NAME]]]
 
 set TOP_MODULE ChipTop
 if {[info exists env(TOP_MODULE)] && $env(TOP_MODULE) ne ""} {
   set TOP_MODULE $env(TOP_MODULE)
 }
-set RTL_FILELIST [file join $PROJECT_ROOT config rtl.f]
+set RTL_FILELIST [file join $CONFIG_DIR rtl.f]
 set RTL_SEARCH_PATHS [list \
-  [file join $PROJECT_ROOT 0_RTL] \
+  $RTL_STAGE_DIR \
   [file join $PROJECT_ROOT verilog] \
 ]
 
 set RTL_DEFINES [list SYNTHESIS DC_SYN]
 set RTL_INCLUDE_DIRS $RTL_SEARCH_PATHS
 set EXTRA_RTL_FILES [list \
-  [file join $PROJECT_ROOT 0_RTL sram_replacements.sv] \
+  [file join $RTL_STAGE_DIR sram_replacements.sv] \
 ]
 
 set STD_CELL_TT_DB \
@@ -37,7 +64,7 @@ set SYNTHETIC_LIBRARY_FILES [list \
 set SRAM_LIBRARY_FILES [list]
 set SRAM_VERILOG_FILES [list]
 
-set REAL_SRAM_LIBRARY_FRAGMENT [file join $PROJECT_ROOT 0_RTL real_sram_libs sram_library_files.tcl]
+set REAL_SRAM_LIBRARY_FRAGMENT [file join $RTL_STAGE_DIR real_sram_libs sram_library_files.tcl]
 if {[file exists $REAL_SRAM_LIBRARY_FRAGMENT]} {
   source -e -v $REAL_SRAM_LIBRARY_FRAGMENT
   if {[info exists REAL_SRAM_DB_FILES]} {
@@ -66,7 +93,7 @@ set DC_HOST_CORES 16
 set DC_COMPILE_OPTIONS [list -area_high_effort_script -no_autoungroup -no_boundary_optimization]
 
 # PrimeTime / PTPX input selection. If PT_DC_RUN_TAG is empty, scripts pick the
-# latest directory under 2_SYN/outputs.
+# latest directory under $SYN_STAGE_DIR/outputs.
 set PT_DC_RUN_TAG ""
 set PTPX_ACTIVITY_FILE ""
 set PTPX_ACTIVITY_FORMAT "fsdb"
@@ -120,11 +147,11 @@ proc latest_child_dir {parent} {
 }
 
 proc selected_dc_output_dir {} {
-  global PROJECT_ROOT PT_DC_RUN_TAG
+  global SYN_STAGE_DIR PT_DC_RUN_TAG
   if {$PT_DC_RUN_TAG ne ""} {
-    return [file join $PROJECT_ROOT 2_SYN outputs $PT_DC_RUN_TAG]
+    return [file join $SYN_STAGE_DIR outputs $PT_DC_RUN_TAG]
   }
-  return [latest_child_dir [file join $PROJECT_ROOT 2_SYN outputs]]
+  return [latest_child_dir [file join $SYN_STAGE_DIR outputs]]
 }
 
 proc setup_common_libraries {} {

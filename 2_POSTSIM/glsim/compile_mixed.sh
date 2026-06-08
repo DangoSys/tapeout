@@ -2,12 +2,19 @@
 set -eu
 
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)
-GLSIM_DIR="$ROOT/1_PRESIM/glsim"
-BUCKYBALL_BUILD=${BUCKYBALL_BUILD:-/home/sjm/buckyball/arch/build/sims.verilator.BuckyballToyVerilatorConfig}
-NETLIST=${NETLIST:-$ROOT/3_POWER/netlist/BuckyballAccelerator.v}
+SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+RTL_STAGE_DIR=${RTL_STAGE_DIR:-$ROOT/${RTL_STAGE_DIR_NAME:-0_RTL}}
+POSTSIM_STAGE_DIR=${POSTSIM_STAGE_DIR:-${PRESIM_STAGE_DIR:-$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)}}
+PRESIM_STAGE_DIR=${PRESIM_STAGE_DIR:-$POSTSIM_STAGE_DIR}
+POWER_STAGE_DIR=${POWER_STAGE_DIR:-$ROOT/${POWER_STAGE_DIR_NAME:-3_POWER}}
+GLSIM_DIR=${GLSIM_DIR:-$SCRIPT_DIR}
+RTL_DIR=${RTL_DIR:-$RTL_STAGE_DIR/RTL}
+FALLBACK_BUILD=${FALLBACK_BUILD:-}
+NETLIST=${NETLIST:-$POWER_STAGE_DIR/netlist/BuckyballAccelerator.v}
 BUILD_DIR=${BUILD_DIR:-$GLSIM_DIR/build}
 PATCHED_NETLIST=${PATCHED_NETLIST:-$BUILD_DIR/BuckyballAccelerator.queue_ram_zero.v}
 SIMV=${SIMV:-$BUILD_DIR/simv_mixed}
+SRAM_ROOT=${SRAM_ROOT:-$RTL_STAGE_DIR/real_sram_libs/compiler_runs}
 RANDOMIZE_RTL=${RANDOMIZE_RTL:-1}
 ZERO_RANDOM=${ZERO_RANDOM:-1}
 INITREG_SUPPORT=${INITREG_SUPPORT:-1}
@@ -25,13 +32,24 @@ python3 "$GLSIM_DIR/scripts/patch_accel_queue_rams.py" \
   --in-netlist "$NETLIST" \
   --out-netlist "$PATCHED_NETLIST"
 
-python3 "$GLSIM_DIR/scripts/make_mixed_filelist.py" \
-  --buckyball-build "$BUCKYBALL_BUILD" \
-  --netlist "$PATCHED_NETLIST" \
-  --cell-model "$CELL_MODEL" \
-  --sram-root "$ROOT/0_RTL/real_sram_libs/compiler_runs" \
-  --tb "$GLSIM_DIR/tb_glsim_mixed.sv" \
-  --out "$BUILD_DIR/rtl_mixed.f"
+if [ -n "$FALLBACK_BUILD" ]; then
+  python3 "$GLSIM_DIR/scripts/make_mixed_filelist.py" \
+    --rtl-dir "$RTL_DIR" \
+    --fallback-build "$FALLBACK_BUILD" \
+    --netlist "$PATCHED_NETLIST" \
+    --cell-model "$CELL_MODEL" \
+    --sram-root "$SRAM_ROOT" \
+    --tb "$GLSIM_DIR/tb_glsim_mixed.sv" \
+    --out "$BUILD_DIR/rtl_mixed.f"
+else
+  python3 "$GLSIM_DIR/scripts/make_mixed_filelist.py" \
+    --rtl-dir "$RTL_DIR" \
+    --netlist "$PATCHED_NETLIST" \
+    --cell-model "$CELL_MODEL" \
+    --sram-root "$SRAM_ROOT" \
+    --tb "$GLSIM_DIR/tb_glsim_mixed.sv" \
+    --out "$BUILD_DIR/rtl_mixed.f"
+fi
 
 cd "$GLSIM_DIR"
 

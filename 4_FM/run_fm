@@ -1,0 +1,16 @@
+#!/bin/sh
+set -eu
+
+RUN_TAG="${RUN_TAG:-$(date +%m%d_%H%M)}"
+SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+PROJECT_ROOT=$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)
+CONFIG_DIR=${CONFIG_DIR:-$PROJECT_ROOT/${CONFIG_DIR_NAME:-config}}
+FM_STAGE_DIR=${FM_STAGE_DIR:-$SCRIPT_DIR}
+export PROJECT_ROOT CONFIG_DIR FM_STAGE_DIR
+. "$CONFIG_DIR/env.sh"
+cd "$SCRIPT_DIR"
+
+mkdir -p logs rpt
+mkdir -p "rpt/$RUN_TAG"
+
+fm_shell -f ./scripts/fm.tcl -x "set RUN_TAG $RUN_TAG" | tee "logs/fm_${RUN_TAG}.log"

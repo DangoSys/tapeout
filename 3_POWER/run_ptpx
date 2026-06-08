@@ -3,7 +3,11 @@ set -eu
 
 RUN_TAG="${RUN_TAG:-$(date +%m%d_%H%M)}"
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-. "$SCRIPT_DIR/../config/env.sh"
+PROJECT_ROOT=$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)
+CONFIG_DIR=${CONFIG_DIR:-$PROJECT_ROOT/${CONFIG_DIR_NAME:-config}}
+POWER_STAGE_DIR=${POWER_STAGE_DIR:-$SCRIPT_DIR}
+export PROJECT_ROOT CONFIG_DIR POWER_STAGE_DIR
+. "$CONFIG_DIR/env.sh"
 cd "$SCRIPT_DIR"
 
 mkdir -p logs outputs rpt

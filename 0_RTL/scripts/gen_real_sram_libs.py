@@ -29,8 +29,9 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_RTL_DIR = REPO_ROOT / "0_RTL" / "RTL"
-DEFAULT_OUT_DIR = REPO_ROOT / "0_RTL" / "real_sram_libs"
+RTL_STAGE_DIR = Path(os.environ.get("RTL_STAGE_DIR", REPO_ROOT / os.environ.get("RTL_STAGE_DIR_NAME", "0_RTL")))
+DEFAULT_RTL_DIR = RTL_STAGE_DIR / "RTL"
+DEFAULT_OUT_DIR = RTL_STAGE_DIR / "real_sram_libs"
 
 MC2_BIN_DIR = Path(
     "/data0/tsmc28/TSMC28/Memory/1/tsmc_n28hpcpmc_20120200_110a/"

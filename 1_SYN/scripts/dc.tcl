@@ -1,5 +1,16 @@
 set STAGE_DIR [file normalize [file join [pwd]]]
-source -e -v ../config/project.tcl
+set PROJECT_ROOT [file normalize [file join $STAGE_DIR ..]]
+if {[info exists env(CONFIG_DIR)] && $env(CONFIG_DIR) ne ""} {
+  set CONFIG_DIR [file normalize $env(CONFIG_DIR)]
+} else {
+  if {[info exists env(CONFIG_DIR_NAME)] && $env(CONFIG_DIR_NAME) ne ""} {
+    set CONFIG_DIR_NAME $env(CONFIG_DIR_NAME)
+  } else {
+    set CONFIG_DIR_NAME config
+  }
+  set CONFIG_DIR [file join $PROJECT_ROOT $CONFIG_DIR_NAME]
+}
+source -e -v [file join $CONFIG_DIR project.tcl]
 
 proc run_or_die {command description} {
   if {[catch {uplevel 1 $command} result options]} {
@@ -118,10 +129,10 @@ report_power -hierarchy > ./rpt/$RUN_TAG/${TOP_MODULE}_power.rpt
 report_cell > ./rpt/$RUN_TAG/${TOP_MODULE}_cell.rpt
 report_reference > ./rpt/$RUN_TAG/${TOP_MODULE}_ref.rpt
 
-set POWER_NETLIST_DIR [file join $PROJECT_ROOT 3_POWER netlist]
+set POWER_NETLIST_DIR [file join $POWER_STAGE_DIR netlist]
 run_or_die {
   set copied_netlist_files [copy_generated_netlist_outputs ./outputs/$RUN_TAG $POWER_NETLIST_DIR]
-} "copy generated netlist outputs to 3_POWER/netlist"
+} "copy generated netlist outputs to power netlist directory"
 puts "Copied [llength $copied_netlist_files] generated netlist output files to $POWER_NETLIST_DIR"
 
 puts "DC run complete: $RUN_TAG"
