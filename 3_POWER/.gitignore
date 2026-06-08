@@ -1,2 +1,6 @@
-netlist/
+netlist/*
+!netlist/
+!netlist/README.md
 waveform/
+!waveform/
+!waveform/README.md

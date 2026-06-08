@@ -3,6 +3,9 @@
 *.saif
 *.log
 *.vcd
-RTL/
+RTL/*
+!RTL/
+!RTL/README.md
+
 generated/
 real_sram_libs/

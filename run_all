@@ -6,13 +6,14 @@ usage() {
 Usage: ./run_all [--top TOP_MODULE] [--elf ELF] [--cycles N] [--progress N] [--dump-vcd 0|1] [--bb-saif 0|1] [--help]
 
 Default flow:
-  1) Run 1_SYN/run_dc
-  2) Copy this synthesis output to 3_POWER/netlist
-  3) Build and run mixed gate-level simulation
-  4) Copy generated SAIF to 3_POWER/waveform/waveform.saif
-  5) Run 3_POWER/run_ptpx
+  1) Generate real SRAM collateral in 0_RTL/real_sram_libs
+  2) Run 1_SYN/run_dc
+  3) Copy this synthesis output to 3_POWER/netlist
+  4) Build and run mixed gate-level simulation
+  5) Copy generated SAIF to 3_POWER/waveform/waveform.saif
+  6) Run 3_POWER/run_ptpx
 
-If TOP_MODULE is not BuckyballAccelerator, only synthesis is run.
+If TOP_MODULE is not BuckyballAccelerator, only SRAM generation and synthesis are run.
 
 Environment overrides:
   RUN_TAG, TOP_MODULE, ELF, CYCLES, PROGRESS, DUMP_VCD, BB_SAIF, RUN_NAME,
@@ -47,6 +48,7 @@ copy_synthesis_outputs() {
 }
 
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+RTL_DIR="$ROOT/0_RTL"
 SYN_DIR="$ROOT/1_SYN"
 GLSIM_DIR="$ROOT/2_POSTSIM/glsim"
 POWER_DIR="$ROOT/3_POWER"
@@ -149,21 +151,28 @@ SYN_OUTPUT_DIR="$SYN_DIR/outputs/$RUN_TAG"
 
 export RUN_TAG TOP_MODULE
 
-say "stage 1/5: start synthesis, TOP_MODULE=$TOP_MODULE, RUN_TAG=$RUN_TAG"
+say "stage 1/6: generate real SRAM collateral"
+(
+  cd "$RTL_DIR"
+  python3 scripts/gen_real_sram_libs.py
+)
+say "stage 1/6 complete: real SRAM collateral is ready"
+
+say "stage 2/6: start synthesis, TOP_MODULE=$TOP_MODULE, RUN_TAG=$RUN_TAG"
 (
   cd "$SYN_DIR"
   ./run_dc --top "$TOP_MODULE"
 )
-say "stage 1/5 complete: synthesis finished"
+say "stage 2/6 complete: synthesis finished"
 
 if [ "$TOP_MODULE" != "BuckyballAccelerator" ]; then
   say "custom TOP_MODULE=$TOP_MODULE detected; stop after synthesis as requested"
   exit 0
 fi
 
-say "stage 2/5: copy synthesis outputs to $POWER_NETLIST_DIR"
+say "stage 3/6: copy synthesis outputs to $POWER_NETLIST_DIR"
 copy_synthesis_outputs "$SYN_OUTPUT_DIR" "$POWER_NETLIST_DIR"
-say "stage 2/5 complete: netlist files are ready"
+say "stage 3/6 complete: netlist files are ready"
 
 RUN_NAME="${RUN_NAME:-${RUN_TAG}_mixed}"
 OUT_DIR="${OUT_DIR:-$GLSIM_DIR/results/$RUN_NAME}"
@@ -172,14 +181,14 @@ SAIF_DST="$POWER_WAVEFORM_DIR/glsim_mixed.saif"
 
 export ELF CYCLES PROGRESS DUMP_VCD BB_SAIF RUN_NAME OUT_DIR
 
-say "stage 3/5: compile mixed simulation"
+say "stage 4/6: compile mixed simulation"
 (
   cd "$GLSIM_DIR"
   ./compile_mixed.sh
 )
-say "stage 3/5 complete: mixed simulation binary is ready"
+say "stage 4/6 complete: mixed simulation binary is ready"
 
-say "stage 4/5: run mixed simulation"
+say "stage 5/6: run mixed simulation"
 say "ELF=$ELF CYCLES=$CYCLES PROGRESS=$PROGRESS DUMP_VCD=$DUMP_VCD BB_SAIF=$BB_SAIF"
 (
   cd "$GLSIM_DIR"
@@ -188,13 +197,13 @@ say "ELF=$ELF CYCLES=$CYCLES PROGRESS=$PROGRESS DUMP_VCD=$DUMP_VCD BB_SAIF=$BB_S
 [ -f "$SAIF_SRC" ] || die "mixed simulation did not generate SAIF: $SAIF_SRC"
 mkdir -p "$POWER_WAVEFORM_DIR"
 cp -f "$SAIF_SRC" "$SAIF_DST"
-say "stage 4/5 complete: copied SAIF to $SAIF_DST"
+say "stage 5/6 complete: copied SAIF to $SAIF_DST"
 
-say "stage 5/5: run PTPX"
+say "stage 6/6: run PTPX"
 (
   cd "$POWER_DIR"
   ./run_ptpx
 )
-say "stage 5/5 complete: PTPX finished"
+say "stage 6/6 complete: PTPX finished"
 
 say "all stages complete"

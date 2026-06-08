@@ -14,7 +14,9 @@ glsim/simv
 glsim/*.key
 glsim/vc_hdrs.h
 glsim/csrc/*
-glsim/elf/
+glsim/elf/*
+!glsim/elf/
+!glsim/elf/README.md
 !glsim/csrc/
 !glsim/csrc/vcs_bbsim_dpi.cpp
 

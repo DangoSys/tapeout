@@ -1,8 +1,9 @@
 # Buckyball Tapeout Flow
 
 This repository contains a staged tapeout flow for the Buckyball design. The
-main entry point is `./run_all`, which connects synthesis, mixed gate-level
-simulation, SAIF generation, and PrimeTime PX power analysis.
+main entry point is `./run_all`, which connects SRAM collateral generation,
+synthesis, mixed gate-level simulation, SAIF generation, and PrimeTime PX power
+analysis.
 
 ## Directory Map
 
@@ -34,12 +35,13 @@ Run the default end-to-end accelerator flow from the repository root:
 
 This runs:
 
-1. `1_SYN/run_dc`
-2. Copies the current synthesis outputs to `3_POWER/netlist/`
-3. `2_POSTSIM/glsim/compile_mixed.sh`
-4. `2_POSTSIM/glsim/run_mixed.sh`
-5. Copies the generated SAIF to `3_POWER/waveform/`
-6. `3_POWER/run_ptpx`
+1. `0_RTL/scripts/gen_real_sram_libs.py`
+2. `1_SYN/run_dc`
+3. Copies the current synthesis outputs to `3_POWER/netlist/`
+4. `2_POSTSIM/glsim/compile_mixed.sh`
+5. `2_POSTSIM/glsim/run_mixed.sh`
+6. Copies the generated SAIF to `3_POWER/waveform/`
+7. `3_POWER/run_ptpx`
 
 Default mixed-simulation settings:
 
@@ -51,7 +53,8 @@ DUMP_VCD=1
 BB_SAIF=1
 ```
 
-If a custom top module is selected, only synthesis is run:
+If a custom top module is selected, SRAM collateral generation and synthesis
+are run:
 
 ```sh
 ./run_all --top ChipTop
@@ -88,7 +91,14 @@ Environment overrides:
 
 ## Running Stages Manually
 
-Synthesis only:
+SRAM collateral generation only:
+
+```sh
+cd 0_RTL
+python3 scripts/gen_real_sram_libs.py
+```
+
+Synthesis only, after SRAM collateral is available in `0_RTL/real_sram_libs/`:
 
 ```sh
 cd 1_SYN

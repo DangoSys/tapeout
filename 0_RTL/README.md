@@ -22,6 +22,8 @@ cd 0_RTL
 python3 scripts/gen_real_sram_libs.py
 ```
 
+The repository-level `./run_all` script runs this step before synthesis.
+
 Useful options:
 
 - `--rtl-dir DIR`: RTL directory to scan. Default: `0_RTL/RTL`.
@@ -30,6 +32,5 @@ Useful options:
 - `--skip-db`: skip Library Compiler `.db` conversion.
 - `--force`: regenerate compiler runs even when existing kits are present.
 - `--discover-only`: only write manifests; do not run memory compilers.
-
 
 
