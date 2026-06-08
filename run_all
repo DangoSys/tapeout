@@ -1,0 +1,200 @@
+#!/bin/sh
+set -eu
+
+usage() {
+  cat <<'EOF'
+Usage: ./run_all [--top TOP_MODULE] [--elf ELF] [--cycles N] [--progress N] [--dump-vcd 0|1] [--bb-saif 0|1] [--help]
+
+Default flow:
+  1) Run 1_SYN/run_dc
+  2) Copy this synthesis output to 3_POWER/netlist
+  3) Build and run mixed gate-level simulation
+  4) Copy generated SAIF to 3_POWER/waveform/waveform.saif
+  5) Run 3_POWER/run_ptpx
+
+If TOP_MODULE is not BuckyballAccelerator, only synthesis is run.
+
+Environment overrides:
+  RUN_TAG, TOP_MODULE, ELF, CYCLES, PROGRESS, DUMP_VCD, BB_SAIF, RUN_NAME,
+  DUMP_FST, DUMP_SAIF, TIMINGCHECKS, VCD_FILTER, ZERO_INIT, EXTRA_ARGS
+EOF
+}
+
+say() {
+  printf '\n[run_all] %s\n' "$*"
+}
+
+die() {
+  printf '[run_all] ERROR: %s\n' "$*" >&2
+  exit 1
+}
+
+copy_synthesis_outputs() {
+  src_dir=$1
+  dst_dir=$2
+
+  [ -d "$src_dir" ] || die "missing synthesis output directory: $src_dir"
+  mkdir -p "$dst_dir"
+
+  copied=0
+  for src in "$src_dir"/*; do
+    [ -f "$src" ] || continue
+    cp -f "$src" "$dst_dir/"
+    copied=$((copied + 1))
+  done
+
+  [ "$copied" -gt 0 ] || die "no synthesis output files found under $src_dir"
+}
+
+ROOT=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+SYN_DIR="$ROOT/1_SYN"
+GLSIM_DIR="$ROOT/2_POSTSIM/glsim"
+POWER_DIR="$ROOT/3_POWER"
+POWER_NETLIST_DIR="$POWER_DIR/netlist"
+POWER_WAVEFORM_DIR="$POWER_DIR/waveform"
+
+TOP_MODULE="${TOP_MODULE:-BuckyballAccelerator}"
+ELF="${ELF:-$GLSIM_DIR/elf/default.elf}"
+CYCLES="${CYCLES:-5000000}"
+PROGRESS="${PROGRESS:-200000}"
+DUMP_VCD="${DUMP_VCD:-1}"
+BB_SAIF="${BB_SAIF:-1}"
+
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --top)
+      [ "$#" -ge 2 ] && [ -n "$2" ] || die "--top requires a module name"
+      TOP_MODULE=$2
+      shift 2
+      ;;
+    --top=*)
+      TOP_MODULE=${1#--top=}
+      [ -n "$TOP_MODULE" ] || die "--top requires a module name"
+      shift
+      ;;
+    --elf)
+      [ "$#" -ge 2 ] && [ -n "$2" ] || die "--elf requires a file path"
+      ELF=$2
+      shift 2
+      ;;
+    --elf=*)
+      ELF=${1#--elf=}
+      [ -n "$ELF" ] || die "--elf requires a file path"
+      shift
+      ;;
+    --cycles)
+      [ "$#" -ge 2 ] && [ -n "$2" ] || die "--cycles requires a value"
+      CYCLES=$2
+      shift 2
+      ;;
+    --cycles=*)
+      CYCLES=${1#--cycles=}
+      [ -n "$CYCLES" ] || die "--cycles requires a value"
+      shift
+      ;;
+    --progress)
+      [ "$#" -ge 2 ] && [ -n "$2" ] || die "--progress requires a value"
+      PROGRESS=$2
+      shift 2
+      ;;
+    --progress=*)
+      PROGRESS=${1#--progress=}
+      [ -n "$PROGRESS" ] || die "--progress requires a value"
+      shift
+      ;;
+    --dump-vcd)
+      [ "$#" -ge 2 ] && [ -n "$2" ] || die "--dump-vcd requires 0 or 1"
+      DUMP_VCD=$2
+      shift 2
+      ;;
+    --dump-vcd=*)
+      DUMP_VCD=${1#--dump-vcd=}
+      [ -n "$DUMP_VCD" ] || die "--dump-vcd requires 0 or 1"
+      shift
+      ;;
+    --bb-saif)
+      [ "$#" -ge 2 ] && [ -n "$2" ] || die "--bb-saif requires 0 or 1"
+      BB_SAIF=$2
+      shift 2
+      ;;
+    --bb-saif=*)
+      BB_SAIF=${1#--bb-saif=}
+      [ -n "$BB_SAIF" ] || die "--bb-saif requires 0 or 1"
+      shift
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      die "unknown option '$1'"
+      ;;
+  esac
+done
+
+case "$TOP_MODULE" in
+  BuckyballAccelerator)
+    DEFAULT_RUN_TAG="$(date +%m%d_%H%M)_buckyball"
+    ;;
+  ChipTop)
+    DEFAULT_RUN_TAG="$(date +%m%d_%H%M)"
+    ;;
+  *)
+    DEFAULT_RUN_TAG="$(date +%m%d_%H%M)_$TOP_MODULE"
+    ;;
+esac
+
+RUN_TAG="${RUN_TAG:-$DEFAULT_RUN_TAG}"
+SYN_OUTPUT_DIR="$SYN_DIR/outputs/$RUN_TAG"
+
+export RUN_TAG TOP_MODULE
+
+say "stage 1/5: start synthesis, TOP_MODULE=$TOP_MODULE, RUN_TAG=$RUN_TAG"
+(
+  cd "$SYN_DIR"
+  ./run_dc --top "$TOP_MODULE"
+)
+say "stage 1/5 complete: synthesis finished"
+
+if [ "$TOP_MODULE" != "BuckyballAccelerator" ]; then
+  say "custom TOP_MODULE=$TOP_MODULE detected; stop after synthesis as requested"
+  exit 0
+fi
+
+say "stage 2/5: copy synthesis outputs to $POWER_NETLIST_DIR"
+copy_synthesis_outputs "$SYN_OUTPUT_DIR" "$POWER_NETLIST_DIR"
+say "stage 2/5 complete: netlist files are ready"
+
+RUN_NAME="${RUN_NAME:-${RUN_TAG}_mixed}"
+OUT_DIR="${OUT_DIR:-$GLSIM_DIR/results/$RUN_NAME}"
+SAIF_SRC="$OUT_DIR/glsim_mixed.saif"
+SAIF_DST="$POWER_WAVEFORM_DIR/glsim_mixed.saif"
+
+export ELF CYCLES PROGRESS DUMP_VCD BB_SAIF RUN_NAME OUT_DIR
+
+say "stage 3/5: compile mixed simulation"
+(
+  cd "$GLSIM_DIR"
+  ./compile_mixed.sh
+)
+say "stage 3/5 complete: mixed simulation binary is ready"
+
+say "stage 4/5: run mixed simulation"
+say "ELF=$ELF CYCLES=$CYCLES PROGRESS=$PROGRESS DUMP_VCD=$DUMP_VCD BB_SAIF=$BB_SAIF"
+(
+  cd "$GLSIM_DIR"
+  ./run_mixed.sh
+)
+[ -f "$SAIF_SRC" ] || die "mixed simulation did not generate SAIF: $SAIF_SRC"
+mkdir -p "$POWER_WAVEFORM_DIR"
+cp -f "$SAIF_SRC" "$SAIF_DST"
+say "stage 4/5 complete: copied SAIF to $SAIF_DST"
+
+say "stage 5/5: run PTPX"
+(
+  cd "$POWER_DIR"
+  ./run_ptpx
+)
+say "stage 5/5 complete: PTPX finished"
+
+say "all stages complete"

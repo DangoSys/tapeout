@@ -37,23 +37,6 @@ proc fail_if_report_matches {path patterns description} {
   }
 }
 
-proc copy_generated_netlist_outputs {src_dir dst_dir} {
-  if {![file isdirectory $src_dir]} {
-    error "DC output directory does not exist: $src_dir"
-  }
-  file mkdir $dst_dir
-  set copied_files [list]
-  foreach src [glob -nocomplain -types f [file join $src_dir *]] {
-    set dst [file join $dst_dir [file tail $src]]
-    file copy -force $src $dst
-    lappend copied_files $dst
-  }
-  if {[llength $copied_files] == 0} {
-    error "No generated netlist output files found under $src_dir"
-  }
-  return $copied_files
-}
-
 if {![info exists RUN_TAG]} {
   set RUN_TAG [clock format [clock seconds] -format "%m%d_%H%M"]
 }
@@ -128,11 +111,5 @@ report_area -hier > ./rpt/$RUN_TAG/area.rpt
 report_power -hierarchy > ./rpt/$RUN_TAG/${TOP_MODULE}_power.rpt
 report_cell > ./rpt/$RUN_TAG/${TOP_MODULE}_cell.rpt
 report_reference > ./rpt/$RUN_TAG/${TOP_MODULE}_ref.rpt
-
-set POWER_NETLIST_DIR [file join $POWER_STAGE_DIR netlist]
-run_or_die {
-  set copied_netlist_files [copy_generated_netlist_outputs ./outputs/$RUN_TAG $POWER_NETLIST_DIR]
-} "copy generated netlist outputs to power netlist directory"
-puts "Copied [llength $copied_netlist_files] generated netlist output files to $POWER_NETLIST_DIR"
 
 puts "DC run complete: $RUN_TAG"
