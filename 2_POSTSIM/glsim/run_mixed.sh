@@ -7,7 +7,7 @@ POSTSIM_STAGE_DIR=${POSTSIM_STAGE_DIR:-$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)}
 GLSIM_DIR=${GLSIM_DIR:-$SCRIPT_DIR}
 BUILD_DIR=${BUILD_DIR:-$GLSIM_DIR/build}
 SIMV=${SIMV:-$BUILD_DIR/simv_mixed}
-ELF=${ELF:-/home/sjm/buckyball/bb-tests/build/workloads/src/CTest/toy/ctest_vecunit_matmul_random1_singlecore-baremetal}
+ELF=${ELF:-$GLSIM_DIR/elf/default.elf}
 CYCLES=${CYCLES:-5000000}
 PROGRESS=${PROGRESS:-100000}
 RUN_NAME=${RUN_NAME:-$(date +%m%d_%H%M%S_mixed)}

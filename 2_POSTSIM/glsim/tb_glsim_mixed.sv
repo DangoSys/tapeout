@@ -15,6 +15,7 @@ module tb_glsim_mixed;
   bit bb_saif_window;
   bit saif_active;
   bit saif_done;
+  bit saif_busy_x_reported;
   logic saif_prev_busy;
 
   localparam real HARNESS_HALF_PERIOD_NS = 0.001;
@@ -48,6 +49,7 @@ module tb_glsim_mixed;
     bb_saif_window = $test$plusargs("BB_SAIF");
     saif_active = 1'b0;
     saif_done = 1'b0;
+    saif_busy_x_reported = 1'b0;
     saif_prev_busy = 1'b0;
 
     if (dump_vcd) begin
@@ -60,7 +62,7 @@ module tb_glsim_mixed;
       $set_gate_level_monitoring("rtl_on");
       $set_toggle_region(tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0);
       if (bb_saif_window) begin
-        $display("[tb] BB_SAIF armed: start on accelerator io.cmd.valid, stop on io.busy 1->0: %s",
+        $display("[tb] BB_SAIF armed: start on accelerator io.cmd.valid, stop on sampled io.busy 1->0: %s",
                  saif_file);
       end else begin
         $toggle_start();
@@ -172,16 +174,22 @@ module tb_glsim_mixed;
         tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile._accelerators_0_io_busy;
 
       if (tile_reset) begin
-        saif_prev_busy <= 1'b0;
+        saif_prev_busy = 1'b0;
+        saif_busy_x_reported = 1'b0;
       end else begin
         if (cmd_valid === 1'b1)
           saif_start("io.cmd.valid");
 
         if (saif_active && saif_prev_busy === 1'b1 && busy === 1'b0)
-          saif_stop_and_report("io.busy 1->0");
+          saif_stop_and_report("sampled io.busy 1->0");
 
-        if (!$isunknown(busy))
-          saif_prev_busy <= busy;
+        if (!$isunknown(busy)) begin
+          saif_prev_busy = busy;
+        end else if (saif_active && !saif_busy_x_reported) begin
+          saif_busy_x_reported = 1'b1;
+          $display("[tb] warning: sampled io.busy is X during BB_SAIF at cycle=%0d time=%0t",
+                   cycle, $time);
+        end
       end
     end
   end

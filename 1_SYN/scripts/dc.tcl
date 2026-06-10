@@ -72,10 +72,6 @@ run_or_die {current_design $TOP_MODULE} "select current design $TOP_MODULE"
 run_or_die {link} "link current design"
 
 run_or_die {source -e -v ./scripts/constraints.tcl} "source constraints.tcl"
-run_or_die {source -e -v ./scripts/set_dont_touch.tcl} "source set_dont_touch.tcl"
-run_or_die {source -e -v ./scripts/set_false_path.tcl} "source set_false_path.tcl"
-run_or_die {source -e -v ./scripts/set_dont_use.tcl} "source set_dont_use.tcl"
-run_or_die {source -e -v ./scripts/operation_conditions.tcl} "source operation_conditions.tcl"
 
 check_design > ./rpt/$RUN_TAG/check_design.rpt
 run_or_die {

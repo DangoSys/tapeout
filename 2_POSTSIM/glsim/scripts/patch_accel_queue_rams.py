@@ -4,13 +4,16 @@ import argparse
 import re
 
 
-QUEUE_RAM_MODULES = {
+QUEUE_RAM_BASE_MODULES = (
+    "ram_6x8",
     "ram_4x82",
+    "ram_4x138",
     "ram_4x161",
-    "ram_8x15_0",
-    "ram_8x15_1",
-    "ram_8x15_2",
-}
+    "ram_8x15",
+)
+
+TOP_MODULE = "BuckyballAccelerator"
+PRIVATE_PREFIX = "glsyn_"
 
 
 def signal_width(text: str, direction: str, name: str) -> int:
@@ -70,6 +73,48 @@ def patch_module(text: str, name: str) -> tuple[str, bool]:
     return text[: match.start()] + emit_ram(name, raddr_w, data_w) + text[match.end() :], True
 
 
+def find_queue_ram_modules(text: str) -> list[str]:
+    bases = "|".join(re.escape(name) for name in QUEUE_RAM_BASE_MODULES)
+    pattern = re.compile(rf"(?m)^module\s+({bases})(?:_\d+)?\b")
+    return sorted({match.group(0).split()[1] for match in pattern.finditer(text)})
+
+
+def find_module_names(text: str) -> list[str]:
+    return re.findall(r"(?m)^module\s+([A-Za-z_][A-Za-z0-9_$]*)\b", text)
+
+
+def privatize_internal_modules(text: str) -> tuple[str, list[str]]:
+    module_names = find_module_names(text)
+    rename = {
+        name: f"{PRIVATE_PREFIX}{name}"
+        for name in module_names
+        if name != TOP_MODULE and not name.startswith(PRIVATE_PREFIX)
+    }
+    if not rename:
+        return text, []
+
+    # Rename definitions and named module instantiations. This keeps the public
+    # accelerator wrapper name stable while preventing gate-netlist internals
+    # from overriding same-named RTL modules elsewhere in the mixed simulation.
+    alternation = "|".join(re.escape(name) for name in sorted(rename, key=len, reverse=True))
+    definition = re.compile(rf"(?m)^module\s+({alternation})\b")
+    instance = re.compile(
+        rf"(?<![A-Za-z0-9_$])({alternation})(?=\s*(?:#\s*\(|[A-Za-z_\\]))"
+    )
+
+    def repl_definition(match: re.Match[str]) -> str:
+        name = match.group(1)
+        return f"module {rename[name]}"
+
+    def repl_instance(match: re.Match[str]) -> str:
+        name = match.group(1)
+        return rename[name]
+
+    text = definition.sub(repl_definition, text)
+    text = instance.sub(repl_instance, text)
+    return text, sorted(rename)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--in-netlist", required=True)
@@ -79,19 +124,24 @@ def main() -> None:
     src = Path(args.in_netlist)
     text = src.read_text(errors="ignore")
     patched = []
-    for name in sorted(QUEUE_RAM_MODULES):
+    queue_ram_modules = find_queue_ram_modules(text)
+    for name in queue_ram_modules:
         text, changed = patch_module(text, name)
         if changed:
             patched.append(name)
 
-    missing = QUEUE_RAM_MODULES - set(patched)
-    if missing:
-        raise SystemExit(f"missing queue RAM modules: {', '.join(sorted(missing))}")
+    if not patched:
+        print("warning: no queue RAM modules found to patch")
+
+    text, renamed = privatize_internal_modules(text)
 
     out = Path(args.out_netlist)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(text)
-    print(f"wrote {out} with patched queue RAMs: {', '.join(patched)}")
+    print(
+        f"wrote {out} with patched queue RAMs: {', '.join(patched)}; "
+        f"privatized {len(renamed)} internal modules"
+    )
 
 
 if __name__ == "__main__":

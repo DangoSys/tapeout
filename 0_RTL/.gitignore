@@ -3,6 +3,7 @@
 *.saif
 *.log
 *.vcd
+*.txt
 RTL/*
 !RTL/
 !RTL/README.md

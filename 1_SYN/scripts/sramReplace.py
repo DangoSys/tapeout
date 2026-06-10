@@ -4,6 +4,7 @@
 The real SRAM compiler flow writes manifests under 0_RTL/real_sram_libs.
 This script consumes those manifests and emits:
   * 0_RTL/generated/sram_replacements.sv
+  * 0_RTL/generated/synthesis_stubs.sv
   * config/rtl.f
 
 Supported SRAM modules are replaced by thin wrappers around the physical
@@ -56,6 +57,79 @@ SYNTHESIS_EXCLUDED_MODULES = {
     "SimDRAM",
     "SimJTAG",
 }
+
+SYNTHESIS_STUBS_TEXT = """// Synthesis-only definitions for simulation/DPI black boxes.
+// Keep behavior out of these modules; they only make DC linking deterministic.
+
+module ITraceDPI(
+  input [7:0] is_issue,
+  input [31:0] rob_id,
+  input [31:0] domain_id,
+  input [31:0] funct,
+  input [63:0] pc,
+  input [63:0] rs1,
+  input [63:0] rs2,
+  input [7:0] bank_enable,
+  input enable
+);
+endmodule
+
+module MTraceDPI(
+  input [7:0] is_write,
+  input [7:0] is_shared,
+  input [31:0] channel,
+  input [63:0] hart_id,
+  input [31:0] vbank_id,
+  input [31:0] pbank_id,
+  input [31:0] group_id,
+  input [31:0] addr,
+  input [63:0] data_lo,
+  input [63:0] data_hi,
+  input enable
+);
+endmodule
+
+module PMCTraceDPI(
+  input [31:0] ball_id,
+  input [31:0] rob_id,
+  input [63:0] elapsed,
+  input enable
+);
+endmodule
+
+module MemPMCTraceDPI(
+  input [7:0] is_store,
+  input [31:0] rob_id,
+  input [63:0] elapsed,
+  input enable
+);
+endmodule
+
+module SCUWriteDPI(
+  input clock,
+  input reset,
+  input [31:0] uart_hart_id,
+  input uart_valid,
+  input [7:0] uart_data,
+  input [31:0] exit_hart_id,
+  input exit_valid,
+  input [31:0] exit_code
+);
+endmodule
+
+module SCUReadDPI(
+  input clock,
+  input reset,
+  input [31:0] hart_id,
+  input enable,
+  input pop,
+  output logic rx_valid,
+  output logic [7:0] rx_data
+);
+  assign rx_valid = 1'b0;
+  assign rx_data = 8'h0;
+endmodule
+"""
 
 MODULE_RE = re.compile(r"\bmodule\s+([A-Za-z_][A-Za-z0-9_$]*)\s*(?:#\s*\(.*?\)\s*)?\((.*?)\);\s*", re.S)
 MODULE_NAME_RE = re.compile(r"\bmodule\s+([A-Za-z_][A-Za-z0-9_$]*)\b", re.S)
@@ -585,6 +659,11 @@ def write_filelist(filelist: Path, replaced_modules: set[str], replacement_rtl: 
     filelist.write_text("\n".join(str(path) for path in out) + "\n")
 
 
+def write_synthesis_stubs(path: Path = SYNTHESIS_STUBS) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(SYNTHESIS_STUBS_TEXT)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--manifest", type=Path, default=DEFAULT_MANIFEST)
@@ -594,9 +673,11 @@ def main() -> int:
     args = parser.parse_args()
 
     replaced = generate_replacements(args.manifest.resolve(), args.rtl_manifest.resolve(), args.out.resolve())
+    write_synthesis_stubs()
     write_filelist(args.filelist.resolve(), replaced, args.out.resolve())
 
     print(f"Generated {args.out}")
+    print(f"Generated {SYNTHESIS_STUBS}")
     print(f"Generated {args.filelist}")
     print(f"Replaced SRAM modules: {len(replaced)}")
     return 0
