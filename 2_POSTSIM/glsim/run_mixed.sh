@@ -10,6 +10,8 @@ SIMV=${SIMV:-$BUILD_DIR/simv_mixed}
 ELF=${ELF:-$GLSIM_DIR/elf/default.elf}
 CYCLES=${CYCLES:-5000000}
 PROGRESS=${PROGRESS:-100000}
+START=${START:-}
+STOP=${STOP:-}
 RUN_NAME=${RUN_NAME:-$(date +%m%d_%H%M%S_mixed)}
 OUT_DIR=${OUT_DIR:-$GLSIM_DIR/results/$RUN_NAME}
 TIMINGCHECKS=${TIMINGCHECKS:-0}
@@ -34,10 +36,36 @@ if [ ! -f "$ELF" ]; then
   exit 1
 fi
 
+case "$START" in
+  ""|*[!0-9]*)
+    if [ -n "$START" ]; then
+      echo "[run] invalid START: $START" >&2
+      exit 1
+    fi
+    ;;
+esac
+
+case "$STOP" in
+  ""|*[!0-9]*)
+    if [ -n "$STOP" ]; then
+      echo "[run] invalid STOP: $STOP" >&2
+      exit 1
+    fi
+    ;;
+esac
+
+BB_CYCLE_WINDOW=0
+if [ -n "$START" ] || [ -n "$STOP" ]; then
+  BB_CYCLE_WINDOW=1
+fi
+
 cd "$OUT_DIR"
 echo "[run] simv=$SIMV"
 echo "[run] elf=$ELF"
 echo "[run] cycles=$CYCLES progress=$PROGRESS"
+if [ "$BB_CYCLE_WINDOW" != "0" ]; then
+  echo "[run] buckyball window start=${START:-0} stop=${STOP:-max_cycles}"
+fi
 echo "[run] out=$OUT_DIR"
 if [ "$TIMINGCHECKS" = "0" ]; then
   echo "[run] timing checks disabled (+notimingcheck)"
@@ -67,6 +95,8 @@ else
 fi
 if [ "$DUMP_SAIF" = "0" ]; then
   echo "[run] SAIF disabled"
+elif [ "$BB_CYCLE_WINDOW" != "0" ]; then
+  echo "[run] SAIF mode: BB_SAIF cycle window"
 elif [ "$BB_SAIF" = "0" ]; then
   echo "[run] SAIF mode: full simulation"
 else
@@ -106,8 +136,16 @@ if [ "$DUMP_SAIF" = "0" ]; then
   set -- "$@" +no_saif
 fi
 
-if [ "$DUMP_SAIF" != "0" ] && [ "$BB_SAIF" != "0" ]; then
+if [ "$DUMP_SAIF" != "0" ] && { [ "$BB_SAIF" != "0" ] || [ "$BB_CYCLE_WINDOW" != "0" ]; }; then
   set -- "$@" +BB_SAIF
+fi
+
+if [ -n "$START" ]; then
+  set -- "$@" +bb_window_start_cycle="$START"
+fi
+
+if [ -n "$STOP" ]; then
+  set -- "$@" +bb_window_stop_cycle="$STOP"
 fi
 
 if [ -n "$EXTRA_ARGS" ]; then

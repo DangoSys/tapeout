@@ -8,11 +8,14 @@ module tb_glsim_mixed;
   longint unsigned max_cycles;
   longint unsigned progress_interval;
   longint unsigned reset_hold_ticks;
+  longint unsigned bb_window_start_cycle;
+  longint unsigned bb_window_stop_cycle;
   string vcd_file;
   string saif_file;
   bit dump_vcd;
   bit dump_saif;
   bit bb_saif_window;
+  bit bb_cycle_window;
   bit saif_active;
   bit saif_done;
   bit saif_busy_x_reported;
@@ -33,6 +36,37 @@ module tb_glsim_mixed;
     return dflt;
   endfunction
 
+  function automatic bit plusarg_u64_present(input string name,
+                                             ref longint unsigned value);
+    if ($value$plusargs({name, "=%d"}, value))
+      return 1'b1;
+    return 1'b0;
+  endfunction
+
+  function automatic bit plusarg_bb_window_start(ref longint unsigned value);
+    if (plusarg_u64_present("bb_window_start_cycle", value))
+      return 1'b1;
+    if (plusarg_u64_present("bb-window-start", value))
+      return 1'b1;
+    if (plusarg_u64_present("bb_start_cycle", value))
+      return 1'b1;
+    if (plusarg_u64_present("gemmini_window_start_cycle", value))
+      return 1'b1;
+    return 1'b0;
+  endfunction
+
+  function automatic bit plusarg_bb_window_stop(ref longint unsigned value);
+    if (plusarg_u64_present("bb_window_stop_cycle", value))
+      return 1'b1;
+    if (plusarg_u64_present("bb-window-stop", value))
+      return 1'b1;
+    if (plusarg_u64_present("bb_stop_cycle", value))
+      return 1'b1;
+    if (plusarg_u64_present("gemmini_window_stop_cycle", value))
+      return 1'b1;
+    return 1'b0;
+  endfunction
+
   function automatic string plusarg_string(input string name,
                                            input string dflt);
     string value;
@@ -47,10 +81,20 @@ module tb_glsim_mixed;
     dump_vcd = !$test$plusargs("no_vcd");
     dump_saif = !$test$plusargs("no_saif");
     bb_saif_window = $test$plusargs("BB_SAIF");
+    bb_window_start_cycle = 0;
+    bb_window_stop_cycle = max_cycles;
+    bb_cycle_window = plusarg_bb_window_start(bb_window_start_cycle)
+      | plusarg_bb_window_stop(bb_window_stop_cycle);
     saif_active = 1'b0;
     saif_done = 1'b0;
     saif_busy_x_reported = 1'b0;
     saif_prev_busy = 1'b0;
+
+    if (bb_cycle_window && bb_window_stop_cycle < bb_window_start_cycle) begin
+      $display("[tb] invalid Buckyball window: start=%0d stop=%0d",
+               bb_window_start_cycle, bb_window_stop_cycle);
+      $finish(2);
+    end
 
     if (dump_vcd) begin
       $dumpfile(vcd_file);
@@ -62,8 +106,13 @@ module tb_glsim_mixed;
       $set_gate_level_monitoring("rtl_on");
       $set_toggle_region(tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0);
       if (bb_saif_window) begin
-        $display("[tb] BB_SAIF armed: start on accelerator io.cmd.valid, stop on sampled io.busy 1->0: %s",
-                 saif_file);
+        if (bb_cycle_window) begin
+          $display("[tb] BB_SAIF cycle window armed: cycles %0d..%0d: %s",
+                   bb_window_start_cycle, bb_window_stop_cycle, saif_file);
+        end else begin
+          $display("[tb] BB_SAIF armed: start on accelerator io.cmd.valid, stop on sampled io.busy 1->0: %s",
+                   saif_file);
+        end
       end else begin
         $toggle_start();
         saif_active = 1'b1;
@@ -76,7 +125,7 @@ module tb_glsim_mixed;
     if (dump_saif && bb_saif_window && !saif_active && !saif_done) begin
       $toggle_start();
       saif_active = 1'b1;
-      $display("[tb] BB_SAIF started (%s): %s", reason, saif_file);
+      $display("[tb] BB_SAIF started (%s): cycle=%0d %s", reason, cycle, saif_file);
     end
   endtask
 
@@ -86,8 +135,18 @@ module tb_glsim_mixed;
       saif_active = 1'b0;
       saif_done = 1'b1;
       $toggle_report(saif_file, 1.0e-9, tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.accelerators_0);
-      $display("[tb] SAIF written (%s): %s", reason, saif_file);
+      $display("[tb] SAIF written (%s): cycle=%0d %s", reason, cycle, saif_file);
     end
+  endtask
+
+  task automatic bb_window_pre_posedge;
+    if (bb_saif_window && bb_cycle_window && cycle == bb_window_start_cycle)
+      saif_start("Buckyball cycle window start");
+  endtask
+
+  task automatic bb_window_post_posedge;
+    if (bb_saif_window && bb_cycle_window && cycle == bb_window_stop_cycle + 1)
+      saif_stop_and_report("Buckyball cycle window stop");
   endtask
 
   task automatic dump_wave_finish;
@@ -125,9 +184,11 @@ module tb_glsim_mixed;
 
   task automatic verilator_cycle_step;
     // Mirrors ball_exec_once(): posedge/eval/dump, then negedge/eval/dump.
+    bb_window_pre_posedge();
     clock = 1'b1;
     #(HARNESS_HALF_PERIOD_NS);
     cycle++;
+    bb_window_post_posedge();
     if (progress_interval != 0 && (cycle % progress_interval) == 0) begin
       $display("[tb] progress cycle=%0d / %0d time=%0t", cycle, max_cycles, $time);
     end
@@ -165,7 +226,7 @@ module tb_glsim_mixed;
   end
 
   always @(posedge tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.clock) begin
-    if (dump_saif && bb_saif_window && !saif_done) begin
+    if (dump_saif && bb_saif_window && !bb_cycle_window && !saif_done) begin
       automatic logic tile_reset =
         tb_glsim_mixed.dut.chiptop0.system.tile_prci_domain.element_reset_domain_bbtile.reset;
       automatic logic cmd_valid =
