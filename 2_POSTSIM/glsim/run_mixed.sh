@@ -19,6 +19,8 @@ VCD_FILTER=${VCD_FILTER:-1}
 DUMP_VCD=${DUMP_VCD:-1}
 DUMP_FST=${DUMP_FST:-1}
 DUMP_SAIF=${DUMP_SAIF:-1}
+DUMP_DRAM_TRACE=${DUMP_DRAM_TRACE:-1}
+DRAM_TRACE_FILE=${DRAM_TRACE_FILE:-$OUT_DIR/dram_trace.csv}
 BB_SAIF=${BB_SAIF:-0}
 EXTRA_ARGS=${EXTRA_ARGS:-}
 ZERO_INIT=${ZERO_INIT:-1}
@@ -102,6 +104,12 @@ elif [ "$BB_SAIF" = "0" ]; then
 else
   echo "[run] SAIF mode: BB_SAIF window"
 fi
+if [ "$DUMP_DRAM_TRACE" = "0" ]; then
+  echo "[run] DRAM trace disabled"
+else
+  mkdir -p "$(dirname "$DRAM_TRACE_FILE")"
+  echo "[run] DRAM trace enabled: $DRAM_TRACE_FILE"
+fi
 
 if [ "$DUMP_FST" != "0" ] && ! command -v vcd2fst >/dev/null 2>&1; then
   echo "[run] missing vcd2fst; set DUMP_FST=0 to skip FST generation" >&2
@@ -140,6 +148,12 @@ if [ "$DUMP_SAIF" != "0" ] && { [ "$BB_SAIF" != "0" ] || [ "$BB_CYCLE_WINDOW" !=
   set -- "$@" +BB_SAIF
 fi
 
+if [ "$DUMP_DRAM_TRACE" = "0" ]; then
+  set -- "$@" +no_dram_trace
+else
+  set -- "$@" +dram_trace="$DRAM_TRACE_FILE"
+fi
+
 if [ -n "$START" ]; then
   set -- "$@" +bb_window_start_cycle="$START"
 fi
@@ -175,4 +189,7 @@ if [ "$DUMP_FST" != "0" ]; then
 fi
 if [ "$DUMP_SAIF" != "0" ]; then
   echo "[run] SAIF: $OUT_DIR/glsim_mixed.saif"
+fi
+if [ "$DUMP_DRAM_TRACE" != "0" ]; then
+  echo "[run] DRAM: $DRAM_TRACE_FILE"
 fi

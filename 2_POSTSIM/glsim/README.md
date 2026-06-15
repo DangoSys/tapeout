@@ -64,6 +64,9 @@ Common environment overrides:
 - `OUT_DIR`: result directory. Default: `results/$RUN_NAME`.
 - `TIMINGCHECKS`: `0` disables timing checks.
 - `DUMP_VCD`, `DUMP_FST`, `DUMP_SAIF`: waveform/activity controls.
+- `DUMP_DRAM_TRACE`: emits external DRAM AXI burst traffic to CSV. Default: `1`.
+- `DRAM_TRACE_FILE`: DRAM trace output path. Default:
+  `results/$RUN_NAME/dram_trace.csv`.
 - `BB_SAIF`: enables the Buckyball-specific SAIF window.
 - `VCD_FILTER`: filters accelerator internal scopes from the final VCD.
 - `ZERO_INIT`: adds `+vcs+initreg+0`.
@@ -74,5 +77,6 @@ Generated files usually include:
 - `results/$RUN_NAME/glsim_mixed.saif`
 - `results/$RUN_NAME/glsim_mixed.vcd`
 - `results/$RUN_NAME/glsim_mixed.fst`
+- `results/$RUN_NAME/dram_trace.csv`
 - `results/$RUN_NAME/stdout.log`
 - `results/$RUN_NAME/sim.log`

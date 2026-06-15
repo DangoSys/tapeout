@@ -1,0 +1,66 @@
+#!/bin/sh
+set -eu
+
+RUN_TAG="${RUN_TAG:-$(date +%m%d_%H%M)}"
+SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+PROJECT_ROOT=$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)
+
+# ── 1. Locate DRAM trace CSV ───────────────────────────────
+TRACE_FILE="${DRAM_TRACE_FILE:-$SCRIPT_DIR/dramtrace/dram_trace.csv}"
+
+if [ -z "$TRACE_FILE" ] || [ ! -f "$TRACE_FILE" ]; then
+  echo "[dram_power] missing DRAM trace; run 2_POSTSIM/glsim/run_mixed.sh with DUMP_DRAM_TRACE=1" >&2
+  exit 1
+fi
+
+# ── 2. Output directories ──────────────────────────────────
+RUN_DIR="$SCRIPT_DIR/outputs/$RUN_TAG"
+mkdir -p "$RUN_DIR"
+
+# ── 3. Generate DRAMSim2 trace (misc format) from CSV ──────
+# DRAMSim2 uses filename prefix to select parser; misc_* → misc format
+# which expects "addr read/write [cycle]" per line.
+MISC_TRACE="$RUN_DIR/misc_dramsim2.trc"
+awk -F, 'NR>1{
+  cmd=($2=="write"?"write":"read");
+  print $3, cmd, $1
+}' "$TRACE_FILE" > "$MISC_TRACE"
+
+# ── 4. Locate DRAMSim2 submodule and configs ───────────────
+DRAMSIM2_DIR="$PROJECT_ROOT/tools/DRAMSim2"
+DRAMSIM_BIN="$DRAMSIM2_DIR/DRAMSim"
+DEVICE_INI="$DRAMSIM2_DIR/ini/DDR3_micron_64M_8B_x4_sg15.ini"
+SYSTEM_INI="$SCRIPT_DIR/dramsim2_cfg/system.ini"
+
+# Build DRAMSim2 if it hasn't been compiled yet
+if [ ! -x "$DRAMSIM_BIN" ]; then
+  echo "[dram_power] building DRAMSim2 ..."
+  make -C "$DRAMSIM2_DIR" clean
+  make -C "$DRAMSIM2_DIR" DRAMSim
+fi
+
+# ── 6. Run DRAMSim2 ────────────────────────────────────────
+# Use absolute path for trace (-t); DRAMSim2 prepends -p dir if relative.
+TRACE_ABS=$(readlink -f "$MISC_TRACE")
+SIM_CYCLES="${DRAMSIM_CYCLES:-120000}"
+SIM_SIZE="${DRAMSIM_SIZE:-4096}"
+DRAMSIM2_STDOUT="$RUN_DIR/dramsim2_stdout.log"
+
+echo "[dram_power] running DRAMSim2 (${SIM_CYCLES} cycles, ${SIM_SIZE}MB) ..."
+"$DRAMSIM_BIN" \
+  -t "$TRACE_ABS" \
+  -s "$SYSTEM_INI" \
+  -d "$DEVICE_INI" \
+  -c "$SIM_CYCLES" \
+  -S "$SIM_SIZE" \
+  -p "$DRAMSIM2_DIR" \
+  > "$DRAMSIM2_STDOUT" 2>&1
+
+# ── 7. Extract power results ───────────────────────────────
+echo "[dram_power] -------------------- DRAMSim2 power report --------------------"
+grep -A5 "Power Data" "$DRAMSIM2_STDOUT" || echo "  (no Power Data found; check $DRAMSIM2_STDOUT)"
+echo "[dram_power] -----------------------------------------------------------------"
+
+echo "[dram_power] trace: $TRACE_FILE"
+echo "[dram_power] DRAMSim2 trace: $MISC_TRACE"
+echo "[dram_power] DRAMSim2 stdout: $DRAMSIM2_STDOUT"

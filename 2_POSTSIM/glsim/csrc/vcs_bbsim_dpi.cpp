@@ -33,9 +33,13 @@ struct MagicMem {
   uint64_t word_size;
   uint64_t line_size;
   uint64_t store_addr;
+  uint64_t store_start_addr;
   int store_id;
   uint64_t store_size;
   uint64_t store_count;
+  uint64_t store_beats;
+  uint64_t cycle;
+  uint64_t clock_hz;
   bool store_inflight;
   bool ar_ready_v;
   bool aw_ready_v;
@@ -49,6 +53,9 @@ static std::vector<std::map<long long, Backing>> g_mem_data;
 static std::string g_elf_file;
 static FILE *g_uart_fp = nullptr;
 static FILE *g_itrace_fp = nullptr;
+static FILE *g_dram_trace_fp = nullptr;
+static bool g_dram_trace_disabled = false;
+static bool g_dram_trace_checked = false;
 static uint64_t g_bdb_rtl_clk = 0;
 
 static void scan_plusargs() {
@@ -64,7 +71,49 @@ static void scan_plusargs() {
     std::string arg(info.argv[i]);
     if (arg.find("+elf=") == 0)
       g_elf_file = arg.substr(strlen("+elf="));
+    if (arg == "+no_dram_trace")
+      g_dram_trace_disabled = true;
   }
+}
+
+static const char *plusarg_value(const char *prefix);
+
+static FILE *dram_trace_fp() {
+  if (g_dram_trace_disabled)
+    return nullptr;
+  if (g_dram_trace_fp)
+    return g_dram_trace_fp;
+  if (g_dram_trace_checked)
+    return nullptr;
+  g_dram_trace_checked = true;
+
+  const char *path = plusarg_value("+dram_trace=");
+  if (!path || !*path)
+    return nullptr;
+
+  g_dram_trace_fp = fopen(path, "w");
+  if (!g_dram_trace_fp) {
+    fprintf(stderr, "[BBSimDRAM] Cannot open DRAM trace: %s\n", path);
+    abort();
+  }
+  fprintf(g_dram_trace_fp,
+          "cycle,kind,addr,id,size_bytes,beats,bytes,clock_hz,mem_base\n");
+  fflush(g_dram_trace_fp);
+  return g_dram_trace_fp;
+}
+
+static void trace_dram_access(MagicMem *mm, const char *kind, uint64_t addr,
+                              int id, uint64_t size_bytes, uint64_t beats) {
+  FILE *fp = dram_trace_fp();
+  if (!fp)
+    return;
+  fprintf(fp, "%llu,%s,0x%llx,%d,%llu,%llu,%llu,%llu,0x%llx\n",
+          (unsigned long long)mm->cycle, kind, (unsigned long long)addr, id,
+          (unsigned long long)size_bytes, (unsigned long long)beats,
+          (unsigned long long)(size_bytes * beats),
+          (unsigned long long)mm->clock_hz,
+          (unsigned long long)mm->mem_base);
+  fflush(fp);
 }
 
 static void load_elf_to_mem(const char *path, uint8_t *data, uint64_t mem_base,
@@ -163,7 +212,6 @@ extern "C" void *bbsim_memory_init(int chip_id, long long mem_size,
                                     long long id_bits, long long clock_hz,
                                     long long mem_base) {
   (void)id_bits;
-  (void)clock_hz;
   scan_plusargs();
 
   while (chip_id >= (int)g_mem_data.size())
@@ -193,9 +241,13 @@ extern "C" void *bbsim_memory_init(int chip_id, long long mem_size,
   mm->word_size = (uint64_t)word_size;
   mm->line_size = (uint64_t)line_size;
   mm->store_addr = 0;
+  mm->store_start_addr = 0;
   mm->store_id = 0;
   mm->store_size = 0;
   mm->store_count = 0;
+  mm->store_beats = 0;
+  mm->cycle = 0;
+  mm->clock_hz = (uint64_t)clock_hz;
   mm->store_inflight = false;
   mm->ar_ready_v = true;
   mm->aw_ready_v = true;
@@ -222,6 +274,9 @@ extern "C" void bbsim_memory_tick(
 
   if (ar_fire) {
     uint64_t start_addr = ((uint64_t)ar_addr / mm->word_size) * mm->word_size;
+    uint64_t beats = (uint64_t)ar_len + 1;
+    uint64_t size_bytes = 1ULL << ar_size;
+    trace_dram_access(mm, "read", (uint64_t)ar_addr, ar_id, size_bytes, beats);
     for (int i = 0; i <= ar_len; i++) {
       mm->rresp.push_back(
           ReadResp{ar_id, mem_read(mm, start_addr + i * mm->word_size),
@@ -231,8 +286,10 @@ extern "C" void bbsim_memory_tick(
 
   if (aw_fire) {
     mm->store_addr = (uint64_t)aw_addr;
+    mm->store_start_addr = (uint64_t)aw_addr;
     mm->store_id = aw_id;
     mm->store_count = (uint64_t)aw_len + 1;
+    mm->store_beats = (uint64_t)aw_len + 1;
     mm->store_size = 1ULL << aw_size;
     mm->store_inflight = true;
   }
@@ -245,6 +302,8 @@ extern "C" void bbsim_memory_tick(
     if (mm->store_count == 0) {
       mm->store_inflight = false;
       mm->bresp.push_back(mm->store_id);
+      trace_dram_access(mm, "write", mm->store_start_addr, mm->store_id,
+                        mm->store_size, mm->store_beats);
       if (!w_last) {
         fprintf(stderr, "[BBSimDRAM] write burst completed without w_last\n");
         abort();
@@ -261,6 +320,9 @@ extern "C" void bbsim_memory_tick(
     mm->bresp.clear();
     mm->rresp.clear();
     mm->store_inflight = false;
+    mm->cycle = 0;
+  } else {
+    mm->cycle++;
   }
 
   *ar_ready = 1;
@@ -323,6 +385,10 @@ extern "C" void scu_sim_exit(uint32_t hart_id, uint32_t code) {
     fprintf(stderr, "[SCU] hart %u: simulation exit code %u\n", hart_id, code);
   if (g_uart_fp)
     fclose(g_uart_fp);
+  if (g_dram_trace_fp) {
+    fclose(g_dram_trace_fp);
+    g_dram_trace_fp = nullptr;
+  }
   vpi_control(vpiFinish, code);
 }
 
@@ -344,8 +410,8 @@ extern "C" void dpi_itrace(unsigned char is_issue, unsigned int rob_id,
     fprintf(g_itrace_fp,
             "cycle=%llu kind=%u rob=%u domain=%u funct=0x%x pc=0x%016llx "
             "bank=0x%x\n",
-            g_bdb_rtl_clk, is_issue, rob_id, domain_id, funct, pc,
-            bank_enable);
+            (unsigned long long)g_bdb_rtl_clk, is_issue, rob_id, domain_id,
+            funct, pc, bank_enable);
   }
 }
 
