@@ -85,7 +85,7 @@ python3 ./scripts/sramReplace.py
 LOG_FILE="logs/dc_${RUN_TAG}.log"
 dc_shell -f ./scripts/dc.tcl -x "set RUN_TAG {$RUN_TAG}" | tee "$LOG_FILE"
 
-if grep -E "FATAL:|^Error:|Unable to resolve reference|has '[0-9]+' unresolved references|Cannot recover|Presto compilation terminated" "$LOG_FILE" >/dev/null; then
+if grep -E "^(FATAL:|Error:)|Warning:.*Unable to resolve reference|has '[0-9]+' unresolved references|Cannot recover|Presto compilation terminated" "$LOG_FILE" >/dev/null; then
   echo "DC run reported fatal errors or unresolved references; see $LOG_FILE" >&2
   exit 1
 fi

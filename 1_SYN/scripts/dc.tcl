@@ -109,3 +109,4 @@ report_cell > ./rpt/$RUN_TAG/${TOP_MODULE}_cell.rpt
 report_reference > ./rpt/$RUN_TAG/${TOP_MODULE}_ref.rpt
 
 puts "DC run complete: $RUN_TAG"
+exit

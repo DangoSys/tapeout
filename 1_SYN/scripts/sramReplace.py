@@ -67,9 +67,21 @@ module ITraceDPI(
   input [31:0] domain_id,
   input [31:0] funct,
   input [63:0] pc,
-  input [63:0] rs1,
-  input [63:0] rs2,
+  input [63:0] rs1_idx,
+  input [63:0] rs2_idx,
+  input [63:0] rs1_data,
+  input [63:0] rs2_data,
   input [7:0] bank_enable,
+  input enable
+);
+endmodule
+
+module CTraceDPI(
+  input [7:0] subcmd,
+  input [31:0] ctr_id,
+  input [63:0] tag,
+  input [63:0] elapsed,
+  input [63:0] cycle,
   input enable
 );
 endmodule
