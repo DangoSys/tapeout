@@ -74,23 +74,23 @@ mkdir -p "$TAPEOUT_DIR/3_POWER/waveform"
 cp "$TAPEOUT_DIR/2_POSTSIM/glsim/results/$SIM_OUT/glsim_mixed.saif" "$TAPEOUT_DIR/3_POWER/waveform/glsim_mixed.saif"
 echo "SAIF: $(ls -lh "$TAPEOUT_DIR/3_POWER/waveform/glsim_mixed.saif" | awk '{print $5}')"
 
-# ---- 9. PTPX power analysis ----
-echo "=== 9. PTPX power analysis ==="
-cd "$TAPEOUT_DIR/3_POWER"
-MAX_RETRIES=10
-for i in $(seq 1 $MAX_RETRIES); do
-  echo "[PTPX] Attempt $i/$MAX_RETRIES..."
-  if ./run_ptpx; then
-    echo "[PTPX] Success on attempt $i"
-    break
-  fi
-  if [ "$i" -eq "$MAX_RETRIES" ]; then
-    echo "[PTPX] Failed after $MAX_RETRIES attempts"
-    exit 1
-  fi
-  echo "[PTPX] Retrying..."
-  sleep 2
-done
+# # ---- 9. PTPX power analysis ----
+# echo "=== 9. PTPX power analysis ==="
+# cd "$TAPEOUT_DIR/3_POWER"
+# MAX_RETRIES=10
+# for i in $(seq 1 $MAX_RETRIES); do
+#   echo "[PTPX] Attempt $i/$MAX_RETRIES..."
+#   if ./run_ptpx; then
+#     echo "[PTPX] Success on attempt $i"
+#     break
+#   fi
+#   if [ "$i" -eq "$MAX_RETRIES" ]; then
+#     echo "[PTPX] Failed after $MAX_RETRIES attempts"
+#     exit 1
+#   fi
+#   echo "[PTPX] Retrying..."
+#   sleep 2
+# done
 
 echo ""
 echo "DONE"
